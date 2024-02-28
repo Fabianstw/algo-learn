@@ -18,6 +18,13 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { badgeVariants } from "@/components/ui/badge"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card"
 
 export function Catalogue() {
   const { t, lang } = useTranslation()
@@ -26,39 +33,49 @@ export function Catalogue() {
 
   return (
     <HorizontallyCenteredDiv>
-      <h1 className="mt-8 text-4xl font-bold">{t("Catalogue")}</h1>
+      <h1 className="text-4xl font-bold">{t("Catalogue")}</h1>
       <div>{t("Catalogue.desc")}</div>
-      <div className="m-6 mx-auto flex flex-wrap justify-center gap-6">
-        {skillGroups.map((g) => (
-          <Button
-            key={g}
-            onClick={() => setSelectedGroup(g)}
-            variant={selectedGroup === g ? "default" : "outline"}
-          >
-            {t("skill." + g)}
-          </Button>
-        ))}
-      </div>
+      <Card className="my-8 w-fit bg-secondary text-secondary-foreground">
+        <CardHeader>
+          <CardTitle>{t("Catalogue.topic")}</CardTitle>
+          <CardDescription>{t("Catalogue.choose.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap justify-start gap-4">
+            {skillGroups.map((g) => (
+              <Button
+                key={g}
+                onClick={() => setSelectedGroup(g)}
+                variant={selectedGroup === g ? "default" : "outline"}
+              >
+                {t("skill." + g)}
+              </Button>
+            ))}
+          </div>
+          {selectedGroup && (
+            <div className="items-top mt-6 flex space-x-2 font-medium">
+              <Checkbox
+                id="terms1"
+                onCheckedChange={(b) => setShowAllVariants(b === true)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="terms1"
+                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  {t("Catalogue.showVariants")}
+                </label>
+              </div>
+            </div>
+          )}
+        </CardContent>
+        {/* <CardFooter>
+    <p>Card Footer</p>
+  </CardFooter> */}
+      </Card>
       {selectedGroup && (
         <>
-          <h2 className="mt-20 text-xl font-bold">
-            {t("skill." + selectedGroup)}
-          </h2>
-          <div>{t("Catalogue.selectExercise")}</div>
-          <div className="items-top my-4 flex space-x-2 font-medium">
-            <Checkbox
-              id="terms1"
-              onCheckedChange={(b) => setShowAllVariants(b === true)}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <label
-                htmlFor="terms1"
-                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                {t("Catalogue.showVariants")}
-              </label>
-            </div>
-          </div>
+          <h2 className="font-bold">{t("Catalogue.selectExercise")}</h2>
           <ol className="my-4">
             {generatorsInGroup(selectedGroup).map((x) => (
               <li

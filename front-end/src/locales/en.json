@@ -1,6 +1,8 @@
 {
   "Catalogue": "Catalogue",
-  "Catalogue.desc": "You can practice various skills on this site. First, select a topic:",
+  "Catalogue.desc": "You can practice various skills on this site.",
+  "Catalogue.topic": "Topic",
+  "Catalogue.choose.desc": "The followinng topics are available. Please choose one.",
   "Catalogue.selectExercise": "Now, select an exercise:",
   "Catalogue.showVariants": "Show all variants",
   "answer.correct": "This answer is correct.",

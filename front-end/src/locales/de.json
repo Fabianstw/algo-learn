@@ -1,6 +1,8 @@
 {
   "Catalogue": "Katalog",
-  "Catalogue.desc": "Auf dieser Webseite kannst verschiedene Fähigkeiten üben. Wähle zuerst ein Thema:",
+  "Catalogue.desc": "Auf dieser Webseite kannst verschiedene Fähigkeiten üben.",
+  "Catalogue.topic": "Thema",
+  "Catalogue.choose.desc": "Die folgenden Themen stehen zur Verfügung. Bitte wähle eines aus.",
   "Catalogue.selectExercise": "Wähle jetzt eine Übungsaufgabe aus:",
   "Catalogue.showVariants": "Zeige alle Varianten",
   "answer.correct": "Diese Antwortmöglichkeit ist richtig.",
