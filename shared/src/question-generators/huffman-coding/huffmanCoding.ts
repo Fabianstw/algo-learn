@@ -47,12 +47,19 @@ const translations: Translations = {
     textTable: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each char?`,
-    feedbackInvalid: "Can only contain 1 and 0",
+    feedbackInvalid: "Only 1 and 0 allowed",
     bottomtext:
       "Hints for the Huffman-Code: If you have to choose between nodes with the same weight, " +
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
+    multiInputText: `Suppose we have the following {#{index-25}#} table, which 
+{#{test-1}#}
+    represents how often each character appears in a given string:
+{{0}}
+What could be a correct **Huffman-Coding** for each character?
+{{1}}`,
   },
+
   de: {
     name: "Berechne eine Hufmann-Codierung",
     description: "Bestimme die Huffman-Codierung eines gegebenen Strings",
@@ -61,11 +68,14 @@ What could be a correct **Huffman-Coding** for each char?`,
     textTable: `Angenommen wir habe die folgende Tabelle, welche angebibt, wie oft jeder Buchstabe in einem gegebenen String vorkommt:
 {{0}}
         Was wäre eine korrekte **Huffman-Codierung** für jeden Buchstaben?`,
-    feedbackInvalid: "Darf nur 1 und 0 enthalten",
+    feedbackInvalid: "Nur 1 und 0 erlaubt",
     bottomtext:
       "Hinweise zum Huffman-Code: Wenn Sie zwischen Knoten mit gleichem Gewicht wählen müssen, " +
       "wählen Sie zuerst jenen, in dessen Teilbaum das alphabetisch kleinste Zeichen enthalten ist." +
       " Wähle zudem als linken Knoten den mit dem kleineren Gewicht.",
+    multiInputText: `Suppose we have the following table, which represents how oftne a char appears in a string:
+{{0}}
+What could be a correct **Huffman-Coding** for each char?`,
   },
 }
 
@@ -261,7 +271,6 @@ export const huffmanCoding: QuestionGenerator = {
     {
       type: "string",
       name: "variant",
-      // Still need to change the choice to choice1 and input to input1
       allowedValues: ["choice", "input"],
     },
   ],
@@ -299,9 +308,32 @@ export const huffmanCoding: QuestionGenerator = {
       )
     }
 
+    const checkFormat: FreeTextFormatFunction = ({ text }) => {
+      if (text.trim() === "") return { valid: false }
+      try {
+        // iterate over each letter to check if either 0 or 1
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] !== "0" && text[i] !== "1") {
+            return {
+              valid: false,
+              message: tFunction(translations, lang).t("feedbackInvalid"),
+            }
+          }
+        }
+      } catch (e) {
+        return {
+          valid: false,
+          message: tFunction(translations, lang).t("feedbackInvalid"),
+        }
+      }
+
+      // no format error
+      return { valid: true, message: "\u2713" }
+    }
+
     /*
-        Generate the random word and get the correct answer
-         */
+    Generate the random word and get the correct answer
+    */
     const random = new Random(seed)
     const wordLengths: Array<[number, number]> = [
       [13, 0.25],
@@ -318,8 +350,9 @@ export const huffmanCoding: QuestionGenerator = {
     if (variantParameter === "choice") {
       variant = random.choice(["choice", "choice2"])
     } else {
-      variant = random.choice(["input"])
+      variant = random.choice(["input", "input2"])
     }
+    variant = "input2"
     let question: Question
     if (variant === "choice" || variant === "input") {
       let word = generateString(wordlength, random)
@@ -335,41 +368,18 @@ export const huffmanCoding: QuestionGenerator = {
       random.shuffle(answers)
       const correctAnswerIndex = answers.indexOf(correctAnswer)
 
-      const checkFormat: FreeTextFormatFunction = ({ text }) => {
-        if (text.trim() === "") return { valid: false }
-        try {
-          // iterate over each letter to check if either 0 or 1
-          for (let i = 0; i < text.length; i++) {
-            if (text[i] !== "0" && text[i] !== "1") {
-              return {
-                valid: false,
-                message: tFunction(translations, lang).t("feedbackInvalid"),
-              }
-            }
-          }
-        } catch (e) {
-          return {
-            valid: false,
-            message: tFunction(translations, lang).t("feedbackInvalid"),
-          }
-        }
-
-        // no format error
-        return { valid: true, message: "\u2713" }
-      }
-
       const feedback: FreeTextFeedbackFunction = ({ text }) => {
         // also switch 1 and 0 to keep the correct solution
         const switchedCorrectAnswer = switchAllOneZeroString(correctAnswer)
         if (text == correctAnswer || text === switchedCorrectAnswer) {
           return {
             correct: true,
-            message: "t(feedback.correct)",
+            message: tFunction(translations, lang).t("feedback.correct"),
           }
         }
         return {
           correct: false,
-          message: "t(feedback.incomplete)",
+          message: tFunction(translations, lang).t("feedback.incomplete"),
           correctAnswer,
         }
       }
@@ -400,8 +410,6 @@ export const huffmanCoding: QuestionGenerator = {
       }
       // else of choice2 or input2
     } else {
-      // TODO: for input2 missing: - feedback and checkFormat functions
-
       // this question is also MultipleChoice, but the user has to find the correct coding of the letters
       // he does not get the word, but instead the number of times a word appears
 
@@ -411,35 +419,123 @@ export const huffmanCoding: QuestionGenerator = {
       // add some spacing to table in the question text using extra feature div_my-5
       const displayTable = convertDictToMdTable(wordArray, "#div_my-5#")
       const correctAnswerTreeNode = huffmanCodingAlgorithm("", wordArray).mainNode
-      let correctAnswerDict: { [key: string]: string } = {}
-      correctAnswerDict = createHuffmanCoding(correctAnswerDict, correctAnswerTreeNode, "")
-
-      const possibleAnswersTableString: string[] = []
-      possibleAnswersTableString.push("\n" + convertDictToMdTable(correctAnswerDict) + "\n")
-      generateWrongAnswersDict(random, wordArray, correctAnswerTreeNode).forEach((element) => {
-        possibleAnswersTableString.push("\n" + convertDictToMdTable(element) + "\n")
-      })
-
-      // shuffle the answers and find the correct index
-      random.shuffle(possibleAnswersTableString)
-      const correctAnswerIndex = possibleAnswersTableString.indexOf(
-        "\n" + convertDictToMdTable(correctAnswerDict) + "\n",
+      const correctAnswerDict: { [key: string]: string } = createHuffmanCoding(
+        {},
+        correctAnswerTreeNode,
+        "",
       )
 
-      question = {
-        type: "MultipleChoiceQuestion",
-        name: huffmanCoding.name(lang),
-        path: permalink,
-        text: t(translations, lang, "textTable", [displayTable, "frequency-table"]),
-        answers: possibleAnswersTableString,
-        // maybe add a bottom text
-        feedback: minimalMultipleChoiceFeedback({
-          correctAnswerIndex: correctAnswerIndex,
-        }),
-      }
+      if (variant === "choice2") {
+        const possibleAnswersTableString: string[] = []
+        possibleAnswersTableString.push("\n" + convertDictToMdTable(correctAnswerDict) + "\n")
+        generateWrongAnswersDict(random, wordArray, correctAnswerTreeNode).forEach((element) => {
+          possibleAnswersTableString.push("\n" + convertDictToMdTable(element) + "\n")
+        })
 
-      return {
-        question: question,
+        // shuffle the answers and find the correct index
+        random.shuffle(possibleAnswersTableString)
+        const correctAnswerIndex = possibleAnswersTableString.indexOf(
+          "\n" + convertDictToMdTable(correctAnswerDict) + "\n",
+        )
+
+        question = {
+          type: "MultipleChoiceQuestion",
+          name: huffmanCoding.name(lang),
+          path: permalink,
+          text: t(translations, lang, "textTable", [displayTable, "frequency-table"]),
+          answers: possibleAnswersTableString,
+          // maybe add a bottom text
+          feedback: minimalMultipleChoiceFeedback({
+            correctAnswerIndex: correctAnswerIndex,
+          }),
+        }
+
+        return {
+          question: question,
+        }
+      } else {
+        // TODO: for input2 missing: - feedback and checkFormat functions
+
+        // {#{index-0}#}{#{index-1}#}{#{index-2}#}
+        let inputFields = ""
+        const prompts: { [key: string]: string } = {}
+        const fieldIDCharMap: { [key: string]: string } = {}
+        const alignment: { [key: string]: "inline" | "oneline" } = {}
+        // iterate through the wordArray
+        let i = 0
+        let prevFieldID = ""
+        for (const key in wordArray) {
+          const fieldID = `index-${i}` // this is the unique ID for the input field
+          prompts[fieldID] = key + ":"
+          fieldIDCharMap[fieldID] = key
+          if (i % 2 === 1) {
+            alignment[prevFieldID + `|` + fieldID] = "oneline"
+            inputFields = inputFields + `{#{` + prevFieldID + `|` + fieldID + `}#}`
+            prevFieldID = ""
+          }
+          if (i === Object.keys(wordArray).length - 1 && i % 2 === 0) {
+            alignment[fieldID] = "oneline"
+            inputFields = inputFields + `{#{` + fieldID + `}#}`
+          }
+          prevFieldID = fieldID
+          i++
+        }
+
+        console.log(inputFields)
+        alignment["index-25"] = "inline"
+        alignment["index-26"] = "inline"
+        alignment["index-27"] = "inline"
+
+        prompts["test-1"] = "Creates a new line"
+
+        const feedback: FreeTextFeedbackFunction = ({ text }) => {
+          // text is a provided using JSON.stringify, so we need to revert this
+          const textDict: unknown = JSON.parse(text)
+
+          function isStringDict(obj: unknown): obj is { [key: string]: string } {
+            if (typeof obj !== "object" || obj === null) return false
+            for (const key in obj) {
+              if (typeof (obj as any)[key] !== "string") {
+                return false
+              }
+            }
+            return true
+          }
+
+          if (!isStringDict(textDict)) {
+            throw new Error("There has been a parse error, parsing text to {[key: string]: string}")
+          }
+
+          for (const key in textDict) {
+            const charKey = fieldIDCharMap[key]
+            if (textDict[key] !== correctAnswerDict[charKey]) {
+              return {
+                correct: false,
+                message: tFunction(translations, lang).t("feedback.incomplete"),
+                correctAnswer: "This would be the correct answer",
+              }
+            }
+          }
+          return {
+            correct: true,
+            message: tFunction(translations, lang).t("feedback.correct"),
+          }
+        }
+
+        question = {
+          type: "MultiFreeTextQuestion",
+          name: huffmanCoding.name(lang),
+          path: permalink,
+          text: t(translations, lang, "multiInputText", [displayTable, inputFields]),
+          prompts: prompts,
+          alignment: alignment,
+          feedback,
+          checkFormat,
+        }
+
+        return {
+          question: question,
+        }
       }
     }
   },

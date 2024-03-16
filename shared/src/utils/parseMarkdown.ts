@@ -9,7 +9,8 @@ export const dollarRegex = /\$([^$]+)\$/
 export const boldRegex = /\*\*([^*]+)\*\*/
 export const italicRegex = /\*([^*]+)\*/
 export const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/
-export const tableRegex = /^(\|(?:[^\r\n|]*\|)+\r?\n\|(?:(:?-+:?)\|)+\r?\n(\|(?:[^\r\n|]*\|)+\r?\n)*)/m
+export const tableRegex =
+  /^(\|(?:[^\r\n|]*\|?)+\r?\n\|(?:(:?-+:?)\|?)+\r?\n(\|(?:[^\r\n|]*\|?)+\r?\n)*)/m
 
 /**
  * The parser converts the markdown string to a ParseTree object defined as
