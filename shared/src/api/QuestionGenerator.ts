@@ -191,31 +191,6 @@ export type FreeTextFormatFunction = (
 export interface MultiFreeTextQuestion extends QuestionBase {
   type: "MultiFreeTextQuestion"
 
-  /*
-  Every input field should get a unique ID. The ID is used to identify the
-  input field in the following objects.
-
-  In the text, mark an input field as {#{_uniqueID_}#}
-  When creating the question it will be replaced by an input field
-  at the corresponding position in the question
-   */
-
-  /** The prompts to show to the user next to each input field */
-  prompts: { [key: string]: string }
-
-  /**
-   * The style of the input field, either align inside the question text or
-   * align it in a new div (options can be extended)
-   * If not provided for a ID, it defaults to create a newline
-   */
-  alignment?: { [key: string]: "inline" | "oneline" | "newline"}
-
-  /** The placeholder texts to show inside each input field (optional) */
-  placeholders?: { [key: string]: string }
-
-  /** The number of lines in each input field (defaults to 1) */
-  lines?: { [key: string]: number }
-
   /** The feedback function for this question; defaults to undefined */
   feedback?: FreeTextFeedbackFunction
 
@@ -224,8 +199,13 @@ export interface MultiFreeTextQuestion extends QuestionBase {
    * provided answers. For example, it can be used to check whether the syntax of
    * the given answers is correct and to provide feedback on the syntax.
    */
-  checkFormat?: FreeTextFormatFunction
+  checkFormat?: MultiFreeTextFormatFunction
 }
+
+export type MultiFreeTextFormatFunction = (
+  answer: FreeTextAnswer,
+  id: string,
+) => { valid: boolean; message?: string } | Promise<{ valid: boolean; message?: string }>
 
 /**
  * QuestionGenerator type for generating questions.

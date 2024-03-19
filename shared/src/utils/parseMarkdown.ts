@@ -9,8 +9,8 @@ export const dollarRegex = /\$([^$]+)\$/
 export const boldRegex = /\*\*([^*]+)\*\*/
 export const italicRegex = /\*([^*]+)\*/
 export const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/
-export const tableRegex =
-  /^(\|(?:[^\r\n|]*\|?)+\r?\n\|(?:(:?-+:?)\|?)+\r?\n(\|(?:[^\r\n|]*\|?)+\r?\n)*)/m
+export const tableRegex = /^(\|(?:[^\r\n|]*\|?)+(\r?\n\|(?:[^\r\n|]*\|?)+)*)/m
+export const inputRegex = /\{\{(.*?)\}\}/
 
 /**
  * The parser converts the markdown string to a ParseTree object defined as
@@ -28,6 +28,7 @@ export type ParseTreeNode =
       kind: "table"
       child: { header: string[]; content: string[][]; alignment: string[]; extraFeature: string }
     }
+  | { kind: "input"; child: string }
 
 /**
  * The parseMarkdown function parses markdown-like text into a parse tree.
@@ -42,6 +43,7 @@ export function parseMarkdown(md: string): ParseTree {
     { regex: tableRegex, kind: "table", markdown: false },
     { regex: codeBlockRegex, kind: "```", markdown: false },
     { regex: quoteBlockRegex, kind: ">", markdown: true },
+    { regex: inputRegex, kind: "input", markdown: false },
     { regex: codeRegex, kind: "`", markdown: false },
     { regex: squareBracketRegex, kind: "$$", markdown: false },
     { regex: dollarRegex, kind: "$", markdown: false },
@@ -68,6 +70,15 @@ export function parseMarkdown(md: string): ParseTree {
         const node = {
           kind,
           child: parseTable(match[0]),
+        } as ParseTreeNode
+        const before = md.slice(0, match.index)
+        const after = md.slice(match.index + match[0].length)
+        return [...parseMarkdown(before), node, ...parseMarkdown(after)]
+      }
+      if (kind === "input") {
+        const node = {
+          kind,
+          child: match[1],
         } as ParseTreeNode
         const before = md.slice(0, match.index)
         const after = md.slice(match.index + match[0].length)
@@ -109,6 +120,10 @@ export function parseTable(table: string) {
   It only needs to stand in the first column as well, but keep the table format.
   Currently possible extraFeatures:
    - #div_xxx# -> this creates a div around the table with the class=xxx
+   - #border_xxx# -> this adds a border around the table with the class=xxx
+   - #table_xxx# -> this adds a class=xxx to the table
+
+   Concatenation of the extraFeatures is possible, e.g., #div_xxx?border_yyy#
    */
 
   // regex expression for extra features

@@ -1,9 +1,9 @@
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import { FreeTextFeedback, MultiFreeTextQuestion } from "@shared/api/QuestionGenerator.ts"
 import { InteractWithQuestion, MODE } from "@/components/InteractWithQuestion.tsx"
 import { Markdown } from "@/components/Markdown.tsx"
 import { Result } from "@/components/QuestionComponent.tsx"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import useGlobalDOMEvents from "@/hooks/useGlobalDOMEvents.ts"
 import { useSound } from "@/hooks/useSound.ts"
 import { useTranslation } from "@/hooks/useTranslation.ts"
@@ -22,20 +22,6 @@ export function ExerciseMultiTextInput({
   const { playSound } = useSound()
   const { t } = useTranslation()
 
-  const currentText: string = question.text ? question.text : ""
-  const prompts: { [key: string]: string } = question.prompts ? question.prompts : {}
-  const alignment: { [key: string]: string } = question.alignment ? question.alignment : {}
-
-  const inputFieldsIDs = extractInputFieldIDs(currentText)
-  const formatFeedbackFieldIDs = inputFieldsIDs
-  const modeIDs: { [key: string]: MODE } = Object.keys(inputFieldsIDs).reduce(
-    (acc, key) => {
-      acc[key] = "invalid"
-      return acc
-    },
-    {} as { [key: string]: MODE },
-  )
-
   const [state, setState] = useState<{
     mode: MODE
     modeID: { [key: string]: MODE }
@@ -44,17 +30,17 @@ export function ExerciseMultiTextInput({
     formatFeedback: { [key: string]: string }
   }>({
     mode: "invalid",
-    modeID: modeIDs,
-    text: inputFieldsIDs,
-    formatFeedback: formatFeedbackFieldIDs,
+    modeID: {},
+    text: {},
+    formatFeedback: {},
   })
 
-  const { mode, text, feedbackObject, formatFeedback } = state
+  const { mode, text, feedbackObject } = state
 
   function checkOverallMode(currentModeIDs: { [x: string]: string }) {
     // if every mode in modeID is draft, the overall mode is draft too
     for (const value of Object.values(currentModeIDs)) {
-      if (value === "invalid") {
+      if (value === "invalid" || value === "initial") {
         return "invalid"
       }
     }
@@ -64,7 +50,7 @@ export function ExerciseMultiTextInput({
   function setText(fieldID: string, value: string) {
     setState((state) => ({ ...state, text: { ...state.text, [fieldID]: value } }))
     if (question.checkFormat) {
-      void Promise.resolve(question.checkFormat({ text: value })).then(({ valid, message }) => {
+      void Promise.resolve(question.checkFormat({ text: value }, fieldID)).then(({ valid, message }) => {
         setState({
           ...state,
           text: { ...state.text, [fieldID]: value },
@@ -74,13 +60,13 @@ export function ExerciseMultiTextInput({
           },
           formatFeedback: {
             ...state.formatFeedback,
-            [fieldID]: message ? message : "",
+            [fieldID]: !valid ? (message ? message : "") : message ? message : "",
           },
           // call the func providing the modeID, because of the delay in setState
           mode: checkOverallMode({ ...state.modeID, [fieldID]: valid ? "draft" : "invalid" }),
         })
-        const color = valid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
-        setMsgColor((prev) => ({ ...prev, [fieldID]: color }));
+        // const color = valid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+        // setMsgColor((prev) => ({ ...prev, [fieldID]: color }));
       })
     } else {
       const valid = value.trim().length > 0
@@ -137,16 +123,6 @@ export function ExerciseMultiTextInput({
       )
     ) : null
 
-  // create a color for each input element
-  const [msgColor, setMsgColor] = useState<{ [key: string]: string }>(
-    Object.keys(inputFieldsIDs).reduce((acc, key) => {
-      acc[key] = "text-green-600 dark:text-green-400"; // default color
-      return acc;
-    }, {} as { [key: string]: string })
-  );
-
-  const parts = currentText.split(/({#{.*?}#})/g)
-
   return (
     <InteractWithQuestion
       permalink={permalink}
@@ -156,7 +132,14 @@ export function ExerciseMultiTextInput({
       footerMessage={message}
       handleFooterClick={handleClick}
     >
-      {parts.map((part, index) => {
+      <Markdown md={question.text} setText={setText} state={state} />
+    </InteractWithQuestion>
+  )
+}
+
+/*
+
+{parts.map((part, index) => {
         return part.startsWith("{#{") && part.endsWith("}#}") ? (
           (() => {
             part = part.replaceAll("{#{", "").replaceAll("}#}", "")
@@ -233,27 +216,5 @@ export function ExerciseMultiTextInput({
         ) : null
       })}
       <br/>
-    </InteractWithQuestion>
-  )
-}
 
-/*
-Helper functions
  */
-function extractInputFieldIDs(currentText: string) {
-  // create a dict with a key for every text field
-  const textTmp: { [key: string]: string } = {}
-  // Using a loop to iterate over matches
-  let match: string[] | null;
-  const regex = /\{#\{(.+?)\}#\}/g
-  while ((match = regex.exec(currentText)) !== null) {
-    // Pushing the captured group into the array
-    match[1].split("|").map((x) => {
-      if (Object.keys(textTmp).includes(x)) {
-        throw new Error("Not every input field has an unique ID, duplicated ID: " + x)
-      }
-      textTmp[x] = ""
-    })
-  }
-  return textTmp
-}

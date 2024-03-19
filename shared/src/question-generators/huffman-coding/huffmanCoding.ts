@@ -42,7 +42,7 @@ const translations: Translations = {
   en: {
     name: "Compute a Huffman-Coding",
     description: "Compute the Huffman-Coding of a given string",
-    text: 'Let "*{{0}}*" be {{1}}. What is a correct **Huffman-Coding** of this {{1}}?',
+    text: 'Let "*{{0}}*" be {{1}}. What is a correct **Huffman-Coding** of this {{1}}? Please do not consider the spaces.',
     prompt: "What is a possible Huffman-Coding?",
     textTable: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
@@ -52,9 +52,9 @@ What could be a correct **Huffman-Coding** for each char?`,
       "Hints for the Huffman-Code: If you have to choose between nodes with the same weight, " +
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
-    multiInputText: `Suppose we have the following {#{index-25}#} table, which 
-{#{test-1}#}
-    represents how often each character appears in a given string:
+    multiInputText: `Suppose we have the following {{table#IL###}}, which represents how often each character 
+{{test#NL#*Char: *##}} 
+appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each character?
 {{1}}`,
@@ -63,7 +63,7 @@ What could be a correct **Huffman-Coding** for each character?
   de: {
     name: "Berechne eine Hufmann-Codierung",
     description: "Bestimme die Huffman-Codierung eines gegebenen Strings",
-    text: 'Sei "*{{0}}*" ein {{1}}. Was ist eine korrekte **Huffman-Codierung** für diesen {{1}}?',
+    text: 'Sei "*{{0}}*" ein {{1}}. Was ist eine korrekte **Huffman-Codierung** für diesen {{1}}? Bitte ignorieren Sie die Leerzeichen.',
     prompt: "Was ist eine mögliche Huffman-Codierung?",
     textTable: `Angenommen wir habe die folgende Tabelle, welche angebibt, wie oft jeder Buchstabe in einem gegebenen String vorkommt:
 {{0}}
@@ -328,7 +328,7 @@ export const huffmanCoding: QuestionGenerator = {
       }
 
       // no format error
-      return { valid: true, message: "\u2713" }
+      return { valid: true, message: "" }
     }
 
     /*
@@ -384,6 +384,9 @@ export const huffmanCoding: QuestionGenerator = {
         }
       }
 
+      // add a space after every 3rd letter
+      word = word.match(/.{1,3}/g)?.join(" ") || word
+
       if (variant === "choice") {
         question = {
           type: "MultipleChoiceQuestion",
@@ -424,6 +427,7 @@ export const huffmanCoding: QuestionGenerator = {
         correctAnswerTreeNode,
         "",
       )
+      console.log(correctAnswerDict)
 
       if (variant === "choice2") {
         const possibleAnswersTableString: string[] = []
@@ -454,44 +458,27 @@ export const huffmanCoding: QuestionGenerator = {
           question: question,
         }
       } else {
-        // TODO: for input2 missing: - feedback and checkFormat functions
-
-        // {#{index-0}#}{#{index-1}#}{#{index-2}#}
         let inputFields = ""
-        const prompts: { [key: string]: string } = {}
         const fieldIDCharMap: { [key: string]: string } = {}
-        const alignment: { [key: string]: "inline" | "oneline" } = {}
         // iterate through the wordArray
         let i = 0
-        let prevFieldID = ""
         for (const key in wordArray) {
           const fieldID = `index-${i}` // this is the unique ID for the input field
-          prompts[fieldID] = key + ":"
           fieldIDCharMap[fieldID] = key
-          if (i % 2 === 1) {
-            alignment[prevFieldID + `|` + fieldID] = "oneline"
-            inputFields = inputFields + `{#{` + prevFieldID + `|` + fieldID + `}#}`
-            prevFieldID = ""
+          inputFields += "|{{" + fieldID + "#TL#" + key + ": ##}}"
+          if (i % 2 == 1) {
+            inputFields += "|\n"
           }
-          if (i === Object.keys(wordArray).length - 1 && i % 2 === 0) {
-            alignment[fieldID] = "oneline"
-            inputFields = inputFields + `{#{` + fieldID + `}#}`
-          }
-          prevFieldID = fieldID
           i++
         }
+        inputFields += "|\n|#border_none?table_w-full#||"
 
         console.log(inputFields)
-        alignment["index-25"] = "inline"
-        alignment["index-26"] = "inline"
-        alignment["index-27"] = "inline"
-
-        prompts["test-1"] = "Creates a new line"
 
         const feedback: FreeTextFeedbackFunction = ({ text }) => {
           // text is a provided using JSON.stringify, so we need to revert this
           const textDict: unknown = JSON.parse(text)
-
+          console.log(textDict)
           function isStringDict(obj: unknown): obj is { [key: string]: string } {
             if (typeof obj !== "object" || obj === null) return false
             for (const key in obj) {
@@ -527,8 +514,6 @@ export const huffmanCoding: QuestionGenerator = {
           name: huffmanCoding.name(lang),
           path: permalink,
           text: t(translations, lang, "multiInputText", [displayTable, inputFields]),
-          prompts: prompts,
-          alignment: alignment,
           feedback,
           checkFormat,
         }
