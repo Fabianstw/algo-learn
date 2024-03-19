@@ -1,7 +1,6 @@
 // TODO: check if the table could be to wide to be represented as possible answer
 
 import { min } from "mathjs"
-import { validateParameters } from "@shared/api/Parameters.ts"
 import {
   FreeTextFeedbackFunction,
   FreeTextFormatFunction,
@@ -33,6 +32,7 @@ import {
 } from "@shared/question-generators/huffman-coding/GenerateWrongAnswers.ts"
 import Random from "@shared/utils/random.ts"
 import { t, tFunction, tFunctional, Translations } from "@shared/utils/translations.ts"
+import { validateParameters } from "../../api/Parameters.ts"
 
 /**
  * All text displayed text goes into the translation object.
@@ -352,7 +352,7 @@ export const huffmanCoding: QuestionGenerator = {
     } else {
       variant = random.choice(["input", "input2"])
     }
-    variant = "input2"
+    // variant = "input2"
     let question: Question
     if (variant === "choice" || variant === "input") {
       let word = generateString(wordlength, random)
@@ -477,8 +477,17 @@ export const huffmanCoding: QuestionGenerator = {
 
         const feedback: FreeTextFeedbackFunction = ({ text }) => {
           // text is a provided using JSON.stringify, so we need to revert this
-          const textDict: unknown = JSON.parse(text)
-          console.log(textDict)
+          let textDict: unknown
+          try {
+            textDict = JSON.parse(text)
+          } catch (error) {
+            console.error("Invalid JSON:", text)
+            return {
+              correct: false,
+              message: tFunction(translations, lang).t("feedback.incomplete"),
+              correctAnswer: "The answer is not a valid JSON",
+            }
+          }
           function isStringDict(obj: unknown): obj is { [key: string]: string } {
             if (typeof obj !== "object" || obj === null) return false
             for (const key in obj) {
