@@ -72,6 +72,10 @@ describe("test for Stack class main", () => {
     stack.push(2)
     stack.push(3)
     expect(stack.toString()).toBe("[1,2,3]")
+    stack.getTop()
+    stack.getTop()
+    stack.getTop()
+    expect(stack.toString()).toBe("[]")
   })
 
   test("bigger test", () => {

@@ -53,7 +53,7 @@ What could be a correct **Huffman-Coding** for each char?`,
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
     multiInputText: `Suppose we have the following {{table#IL###}}, which represents how often each character 
-{{test#NL#*Char: *##}} 
+{{test#NL#**Char: **##}} 
 appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each character?
@@ -522,6 +522,7 @@ export const huffmanCoding: QuestionGenerator = {
           type: "MultiFreeTextQuestion",
           name: huffmanCoding.name(lang),
           path: permalink,
+          fillOutAll: true,
           text: t(translations, lang, "multiInputText", [displayTable, inputFields]),
           feedback,
           checkFormat,

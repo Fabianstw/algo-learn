@@ -4,10 +4,10 @@ import math from "@shared/utils/math.ts"
  * This Class represents a Stack
  */
 export class Stack {
-  size: number
-  stack: number[]
-  currentPosition: number
-  resize: boolean
+  private size: number
+  private stack: number[]
+  private currentPosition: number
+  private readonly resize: boolean
   constructor(size: number, resize: boolean = false) {
     this.size = size
     this.stack = new Array(size).fill(math.NaN) as number[]
@@ -40,11 +40,19 @@ export class Stack {
   getTop(): number {
     if (this.currentPosition >= 0) {
       const returnValue = this.stack[this.currentPosition]
-      if (this.resize && this.currentPosition < this.size / 4) {
+      if (this.resize && this.currentPosition < this.size / 4 && this.size >= 4) {
         this.decreaseStack()
       }
       this.currentPosition--
       return returnValue
+    } else {
+      throw new Error("The stack is empty")
+    }
+  }
+
+  getTopValue(): number {
+    if (this.currentPosition >= 0) {
+      return this.stack[this.currentPosition]
     } else {
       throw new Error("The stack is empty")
     }
@@ -82,12 +90,19 @@ export class Stack {
    * This methode decreases the size of the stack
    */
   decreaseStack(): void {
-    this.size /= 2
-    const newStack = new Array(this.size).fill(math.NaN) as number[]
-    for (let i = 0; i < this.currentPosition; i++) {
-      newStack[i] = this.stack[i]
+    if (this.size >= 4) {
+      this.size = Math.floor(this.size / 2)
+      console.log("Decreasing stack size to " + this.size)
+      const newStack = new Array(this.size).fill(math.NaN) as number[]
+      for (let i = 0; i < this.currentPosition; i++) {
+        newStack[i] = this.stack[i]
+      }
+      this.stack = newStack
     }
-    this.stack = newStack
+  }
+
+  getStack(): number[] {
+    return this.stack
   }
 
   /**

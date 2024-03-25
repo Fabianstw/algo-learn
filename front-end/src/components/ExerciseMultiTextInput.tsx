@@ -22,6 +22,8 @@ export function ExerciseMultiTextInput({
   const { playSound } = useSound()
   const { t } = useTranslation()
 
+  question.fillOutAll = question.fillOutAll ? question.fillOutAll : false
+
   const [state, setState] = useState<{
     mode: MODE
     modeID: { [key: string]: MODE }
@@ -29,7 +31,7 @@ export function ExerciseMultiTextInput({
     feedbackObject?: FreeTextFeedback
     formatFeedback: { [key: string]: string }
   }>({
-    mode: "invalid",
+    mode: !question.fillOutAll ? "draft" : "invalid",
     modeID: {},
     text: {},
     formatFeedback: {},
@@ -38,6 +40,7 @@ export function ExerciseMultiTextInput({
   const { mode, text, feedbackObject } = state
 
   function checkOverallMode(currentModeIDs: { [x: string]: string }) {
+    if (!question.fillOutAll) return "draft"
     // if every mode in modeID is draft, the overall mode is draft too
     for (const value of Object.values(currentModeIDs)) {
       if (value === "invalid" || value === "initial") {

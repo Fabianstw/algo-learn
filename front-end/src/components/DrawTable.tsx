@@ -41,6 +41,23 @@ export function DrawTable({
     }
   })
 
+  let cellVerticalAlign = "align-"
+  extraFeatureList.map((feature) => {
+    if (feature.startsWith("av")) {
+      cellVerticalAlign = feature.split("_")[1]
+    }
+  })
+  if (cellVerticalAlign === "align-") {
+    cellVerticalAlign = "align-top"
+  }
+
+  let cellHorizontalAlign = "text-"
+  extraFeatureList.map((feature) => {
+    if (feature.startsWith("ah")) {
+      cellHorizontalAlign += feature.split("_")[1]
+    }
+  })
+
   tableHeader.push(
     <tr key={`row-0`}>
       {parsedHeader.map((md, j) => (
@@ -58,7 +75,7 @@ export function DrawTable({
         {parsedContent[i].map((md, j) => (
           <td
             key={`cell-${i}-${j}`}
-            className={`${borderStyle} p-2 text-${parsedAlignment[j]} align-top`}
+            className={`${borderStyle} p-2 text-${parsedAlignment[j]} ${cellVerticalAlign} ${cellHorizontalAlign}`}
           >
             <Markdown md={md} state={state} setText={setText} />
           </td>

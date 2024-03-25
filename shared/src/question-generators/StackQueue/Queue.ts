@@ -73,7 +73,6 @@ export class Queue {
    * This method returns the complete queue
    */
   getQueue(): string {
-    console.log(this.queue)
     // return this.queue everything out this.front and this.rear is undefined
     const partQueue = this.queue.slice(this.front + 1, this.rear + 1)
     const queue = new Array(this.size).fill(math.NaN) as number[]
