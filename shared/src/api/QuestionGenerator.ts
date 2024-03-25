@@ -194,6 +194,9 @@ export interface MultiFreeTextQuestion extends QuestionBase {
   /** The feedback function for this question; defaults to undefined */
   feedback?: FreeTextFeedbackFunction
 
+  /** If all input fields need to be filled out. Defaults to false */
+  fillOutAll?: boolean
+
   /**
    * If provided, the following function performs a preliminary check on the
    * provided answers. For example, it can be used to check whether the syntax of

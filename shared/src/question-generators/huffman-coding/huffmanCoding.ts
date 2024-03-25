@@ -47,7 +47,7 @@ const translations: Translations = {
     textTable: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each char?`,
-    feedbackInvalid: "Only 1 and 0 allowed",
+    feedbackInvalid: "Only 1 and 0 allowed Only 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowed",
     bottomtext:
       "Hints for the Huffman-Code: If you have to choose between nodes with the same weight, " +
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
@@ -328,7 +328,7 @@ export const huffmanCoding: QuestionGenerator = {
       }
 
       // no format error
-      return { valid: true, message: "" }
+      return { valid: true, message: text }
     }
 
     /*
@@ -513,6 +513,7 @@ export const huffmanCoding: QuestionGenerator = {
           type: "MultiFreeTextQuestion",
           name: huffmanCoding.name(lang),
           path: permalink,
+          fillOutAll: true,
           text: t(translations, lang, "multiInputText", [displayTable, inputFields]),
           feedback,
           checkFormat,
