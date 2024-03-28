@@ -1,14 +1,12 @@
-import math from "@shared/utils/math.ts"
-
 /**
  * This class represents a queue
  */
 export class Queue {
-  size: number
-  queue: number[]
-  front: number
-  rear: number
-  numberOfElements: number
+  private readonly size: number
+  private readonly queue: number[]
+  private front: number
+  private rear: number
+  private numberOfElements: number
   constructor(size: number) {
     this.size = size
     this.queue = new Array(size).fill(0) as number[]
@@ -46,6 +44,37 @@ export class Queue {
   }
 
   /**
+   * This method returns the front element of the queue
+   * @returns The front element of the queue
+   */
+  getFront(): number {
+    if (this.numberOfElements > 0) {
+      return this.queue[(this.front + 1) % this.size]
+    } else {
+      throw new Error("The queue is empty")
+    }
+  }
+
+  /**
+   * This method returns the rear element of the queue
+   * @returns The rear element of the queue
+   */
+  getRear(): number {
+    if (this.numberOfElements > 0) {
+      return this.queue[this.rear]
+    } else {
+      throw new Error("The queue is empty")
+    }
+  }
+
+  /**
+   * This method returns the size of the queue (possible amount of elements)
+   */
+  getSize(): number {
+    return this.size
+  }
+
+  /**
    * This method returns the current number of elements in the queue
    * @returns The current number of elements in the queue
    */
@@ -72,15 +101,16 @@ export class Queue {
   /**
    * This method returns the complete queue
    */
-  getQueue(): string {
+  getQueue(withPointer: boolean = false): string {
+    // TODO correct this version
     // return this.queue everything out this.front and this.rear is undefined
     const partQueue = this.queue.slice(this.front + 1, this.rear + 1)
-    const queue = new Array(this.size).fill(math.NaN) as number[]
+    const queue = new Array(this.size).fill(-1) as number[]
     if (this.rear > this.front) {
       for (let i = this.front + 1; i <= this.rear; i++) {
         queue[i] = partQueue[i]
       }
-    } else {
+    } else if (this.front < this.rear) {
       for (let i = 0; i <= this.rear; i++) {
         queue[i] = this.queue[i]
       }
@@ -95,6 +125,7 @@ export class Queue {
         result += ","
       }
     }
+    withPointer ? result += "\nFront: " + this.front + "\nRear: " + this.rear : ""
     return result
   }
 }

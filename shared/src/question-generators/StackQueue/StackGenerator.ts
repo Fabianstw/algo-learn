@@ -97,7 +97,7 @@ const answerOptionList: Translations = {
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Größe des Stacks auf {{2}} erhöhen",
     pushMoreCouldIncrSizeV1N:
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Größe des Stacks nicht erhöhen",
-    popForQuaterV1: "Das Popen von {{0}} Elementen vom Stack {{1}} wird die Größe um 4 verringern",
+    popForQuaterV1: "Das poppen von {{0}} Elementen vom Stack {{1}} wird die Größe um 4 verringern",
   },
 }
 
@@ -112,7 +112,7 @@ const answerOptionList: Translations = {
  * @param stackName The name of the stack
  * @param random
  */
-function generateOperations(
+function generateOperationsStack(
   elements: number[],
   stackSize: number,
   resize: boolean,
@@ -190,7 +190,7 @@ function generateOperations(
   }
 }
 
-function generateOperationsFreetext(
+function generateOperationsFreetextStack(
   elements: number[],
   stackSize: number,
   resize: boolean,
@@ -311,7 +311,7 @@ function generateOperationsFreetext(
  * @param random
  * @param lang
  */
-function generateCorrectAnswers(
+function generateCorrectAnswersStack(
   stack: Stack,
   stackOverflowError: boolean,
   dynamic: boolean,
@@ -386,7 +386,7 @@ function generateCorrectAnswers(
  * @param lang
  * @param amount
  */
-function generateWrongAnswer(
+function generateWrongAnswerStack(
   stack: Stack,
   stackOverflowError: boolean,
   dynamic: boolean,
@@ -477,7 +477,7 @@ function generateWrongAnswer(
 export const stackQuestion: QuestionGenerator = {
   name: tFunctional(translations, "name"),
   description: tFunctional(translations, "description"),
-  tags: ["stack", "queue"],
+  tags: ["stack"],
   languages: ["en", "de"],
   expectedParameters: [
     {
@@ -488,7 +488,7 @@ export const stackQuestion: QuestionGenerator = {
   ],
 
   /**
-   * Generates a new MultipleChoiceQuestion question.
+   * Generates a new Stack question question.
    *
    * @param generatorPath The path the generator is located. Defined in settings/questionSelection
    * @param lang The language of the question
@@ -576,7 +576,7 @@ export const stackQuestion: QuestionGenerator = {
      */
     let question: Question
     if (variant === "choice") {
-      const generation = generateOperations(
+      const generation = generateOperationsStack(
         stackElementsValues,
         stackSize,
         dynamic,
@@ -586,7 +586,7 @@ export const stackQuestion: QuestionGenerator = {
         random,
       )
 
-      const correctAnswers = generateCorrectAnswers(
+      const correctAnswers = generateCorrectAnswersStack(
         generation.stack,
         stackOverflowError,
         dynamic,
@@ -596,7 +596,7 @@ export const stackQuestion: QuestionGenerator = {
       )
 
       const amount = 6 - correctAnswers.length
-      const wrongAnswers = generateWrongAnswer(
+      const wrongAnswers = generateWrongAnswerStack(
         generation.stack,
         stackOverflowError,
         dynamic,
@@ -681,7 +681,7 @@ export const stackQuestion: QuestionGenerator = {
         }
       }
 
-      const generatedOperations = generateOperationsFreetext(
+      const generatedOperations = generateOperationsFreetextStack(
         stackElementsValues,
         stackSize,
         dynamic,
