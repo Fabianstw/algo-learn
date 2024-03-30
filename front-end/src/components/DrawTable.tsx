@@ -4,6 +4,20 @@ import { MODE } from "@/components/InteractWithQuestion.tsx"
 import { Markdown } from "@/components/Markdown.tsx"
 
 /**
+ * The List of all the possible extra features for the table
+ * Separate each feature with a question mark like this: "border_solid?av_middle?ah_center"
+ *
+ * div_ : The class for the div that contains the table
+ * table_ : The class for the table
+ * border_ : The border style of the table
+ * av_ : The vertical alignment of the cells
+ * ah_ : The horizontal alignment of the cells
+ * td/tf : Transpose the table (td --> definitive, tf --> frontend decision)
+ * sd/sf : Split the table in half (sd --> definitive, sf --> frontend decision)
+ *
+ */
+
+/**
  * A component that returns a table
  * @param table The table to be drawn (passed as md format)
  * @param setText
@@ -24,15 +38,65 @@ export function DrawTable({
     formatFeedback: { [key: string]: string }
   }
 }): ReactElement {
-  const parsedHeader = table.header
-  const parsedContent = table.content
+  let parsedHeader = table.header
+  let parsedContent = table.content
   const parsedAlignment = table.alignment
-  const extraFeature = table.extraFeature
+  let extraFeature = table.extraFeature
 
   const extraFeatureList = extraFeature.split("?")
 
-  // create the value for the header
-  const tableHeader = []
+  // TODO add the tf feature
+  // transpose the table
+  if (extraFeatureList.includes("td")) {
+    const newContent = transposeTable(parsedHeader, parsedContent).newContent
+    parsedContent = newContent
+    parsedHeader = []
+  }
+
+  // split the table into two tables
+  if (extraFeatureList.includes("sd")) {
+    if (extraFeature.indexOf("?sd") !== -1) {
+      extraFeature = extraFeature.replace("?sd", "")
+    } else if (extraFeature.indexOf("sd?") !== -1) {
+      extraFeature = extraFeature.replace("sd?", "")
+    } else {
+      extraFeature = extraFeature.replace("sd", "")
+    }
+
+    const half = Math.ceil(parsedHeader.length / 2)
+    const headerFirst = parsedHeader.slice(0, half)
+    const headerSecond = parsedHeader.slice(half)
+    // for every line in content split this line in half
+    const contentFirst = []
+    const contentSecond = []
+    for (let i = 0; i < parsedContent.length; i++) {
+      const line = parsedContent[i]
+      contentFirst.push(line.slice(0, half))
+      contentSecond.push(line.slice(half))
+    }
+    // draw the first table
+    const tableFirst = {
+      header: headerFirst,
+      content: contentFirst,
+      alignment: parsedAlignment,
+      extraFeature,
+    }
+    const firstTable = DrawTable({ table: tableFirst, setText, state })
+    // draw the second table
+    const tableSecond = {
+      header: headerSecond,
+      content: contentSecond,
+      alignment: parsedAlignment,
+      extraFeature,
+    }
+    const secondTable = DrawTable({ table: tableSecond, setText, state })
+    return (
+      <div>
+        <div className={`mb-2`}>{firstTable}</div>
+        {secondTable}
+      </div>
+    )
+  }
 
   let borderStyle = "border"
   extraFeatureList.map((feature) => {
@@ -58,6 +122,7 @@ export function DrawTable({
     }
   })
 
+  const tableHeader = []
   tableHeader.push(
     <tr key={`row-0`}>
       {parsedHeader.map((md, j) => (
@@ -109,4 +174,30 @@ export function DrawTable({
   } else {
     return tableReturnValue
   }
+}
+
+function transposeTable(parsedHeader: string[], parsedContent: string[][]) {
+  const newContent: string[][] = []
+  // the header needs to be on the left too,
+  // so we add the header (if exists) to the first column of the content
+  // and surround each string with **
+  if (parsedHeader.length > 0) {
+    for (let i = 0; i < parsedHeader.length; i++) {
+      if (i >= newContent.length) {
+        newContent.push([`**${parsedHeader[i]}**`])
+      } else {
+        newContent[i].push(`**${parsedHeader[i]}**`)
+      }
+    }
+  }
+  // then we add the content to the newContent
+  for (let i = 0; i < parsedContent.length; i++) {
+    for (let j = 0; j < parsedContent[i].length; j++) {
+      if (j + 1 > newContent.length) {
+        newContent.push([])
+      }
+      newContent[j].push(parsedContent[i][j])
+    }
+  }
+  return { newContent }
 }

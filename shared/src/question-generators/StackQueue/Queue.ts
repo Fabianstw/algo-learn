@@ -43,6 +43,57 @@ export class Queue {
     }
   }
 
+  minFind(): number {
+    if (this.numberOfElements === 0) {
+      // return nana
+      return Number.NaN
+    }
+    // There is a faster possible implementation,
+    // but this is easier to understand
+    let min = this.queue[this.front + 1]
+    const helper: number[] = this.toString()
+      .replaceAll("[", "")
+      .replaceAll("]", "")
+      .split(",")
+      .map((x) => parseInt(x))
+    for (let i = 0; i < helper.length; i++) {
+      if (helper[i] < min) {
+        min = helper[i]
+      }
+    }
+    console.log(min)
+    return min
+  }
+
+  /**
+   * This method returns the second min element of the queue
+   * Used for wrong answer generation
+   */
+  minFindSecond(): number {
+    if (this.numberOfElements < 2) {
+      // return nana
+      return Number.NaN
+    }
+    // There is a faster possible implementation,
+    // but this is easier to understand
+    let min = this.queue[this.front + 1]
+    let secondMin = Number.MAX_SAFE_INTEGER
+    const helper: number[] = this.toString()
+      .replaceAll("[", "")
+      .replaceAll("]", "")
+      .split(",")
+      .map((x) => parseInt(x))
+    for (let i = 0; i < helper.length; i++) {
+      if (helper[i] < min) {
+        secondMin = min
+        min = helper[i]
+      } else if (helper[i] < secondMin) {
+        secondMin = helper[i]
+      }
+    }
+    return secondMin
+  }
+
   /**
    * This method returns the front element of the queue
    * @returns The front element of the queue
@@ -56,12 +107,36 @@ export class Queue {
   }
 
   /**
+   * This method returns the front + 1 element of the queue
+   * Used for wrong answer generation
+   */
+  getFrontPlusOne(): number {
+    if (this.numberOfElements > 0) {
+      return this.queue[(this.front + 2) % this.size]
+    } else {
+      throw new Error("The queue is empty" + this.queue.toString())
+    }
+  }
+
+  /**
    * This method returns the rear element of the queue
    * @returns The rear element of the queue
    */
   getRear(): number {
     if (this.numberOfElements > 0) {
       return this.queue[this.rear]
+    } else {
+      throw new Error("The queue is empty")
+    }
+  }
+
+  /**
+   * This method returns the rear - 1 element of the queue
+   * Used for wrong answer generation
+   */
+  getRearMinusOne(): number {
+    if (this.numberOfElements > 0) {
+      return this.queue[(this.rear - 1 + this.size) % this.size]
     } else {
       throw new Error("The queue is empty")
     }
@@ -102,30 +177,40 @@ export class Queue {
    * This method returns the complete queue
    */
   getQueue(withPointer: boolean = false): string {
-    // TODO correct this version
-    // return this.queue everything out this.front and this.rear is undefined
-    const partQueue = this.queue.slice(this.front + 1, this.rear + 1)
-    const queue = new Array(this.size).fill(-1) as number[]
-    if (this.rear > this.front) {
+    if (this.numberOfElements === 0) {
+      let returnString = new Array(this.size).fill(-1).toString()
+      if (withPointer) {
+        returnString += "\nFront: " + this.front + "\nRear: " + this.rear
+      }
+      return returnString
+    }
+
+    // case 1: front < rear (means: no wrap around)
+    if (this.front < this.rear) {
+      const calcArray = new Array(this.size).fill(-1)
       for (let i = this.front + 1; i <= this.rear; i++) {
-        queue[i] = partQueue[i]
+        calcArray[i] = this.queue[i]
       }
-    } else if (this.front < this.rear) {
+      let returnString = calcArray.toString()
+      if (withPointer) {
+        returnString += "\nFront: " + this.front + "\nRear: " + this.rear
+      }
+      return returnString
+    }
+    // case 2 rear < front (means: wrap around)
+    else {
+      const calcArray = new Array(this.size).fill(-1)
+      for (let i = this.front + 1; i < this.size; i++) {
+        calcArray[i] = this.queue[i]
+      }
       for (let i = 0; i <= this.rear; i++) {
-        queue[i] = this.queue[i]
+        calcArray[i] = this.queue[i]
       }
-      for (let i = this.front + 1; i < this.queue.length; i++) {
-        queue[i] = this.queue[i]
+      let returnString = calcArray.toString()
+      if (withPointer) {
+        returnString += "\nFront: " + this.front + "\nRear: " + this.rear
       }
+      return returnString
     }
-    let result: string = ""
-    for (let i = 0; i < this.size; i++) {
-      result += queue[i]
-      if (i < this.size - 1) {
-        result += ","
-      }
-    }
-    withPointer ? result += "\nFront: " + this.front + "\nRear: " + this.rear : ""
-    return result
   }
 }

@@ -159,7 +159,7 @@ describe("test for Queue class", () => {
     queue.dequeueElement()
     queue.queueElement(20)
     queue.queueElement(21)
-    expect(queue.getQueue()).toEqual("20,21,undefined,undefined,undefined,5,6,7,8,9")
+    expect(queue.getQueue()).toEqual("20,21,-1,-1,-1,5,6,7,8,9")
   })
 
   test("handles wrap-around correctly", () => {

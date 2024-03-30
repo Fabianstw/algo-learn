@@ -33,7 +33,7 @@ const translations: Translations = {
       `
     Consider having a **{{0}} Stack "{{1}}"**, who can store at most` +
       " ${{2}}$ " +
-      `elements {{3}}
+      `elements. {{3}}
     **We perform the following operations:**
 {{4}}
     `,
@@ -275,7 +275,7 @@ function generateOperationsFreetextStack(
           operations.push({ amount: stack.getCurrentPosition().toString() })
         }
       } else {
-        const pushOrPop = increase
+        let pushOrPop = increase
           ? random.weightedChoice([
               [true, 0.7],
               [false, 0.3],
@@ -284,6 +284,7 @@ function generateOperationsFreetextStack(
               [true, 0.25],
               [false, 0.75],
             ])
+        if (stack.getCurrentPosition() === 0) pushOrPop = true
         if (pushOrPop) {
           const pushValue = random.int(1, 20)
           operations.push({ push: pushValue.toString() })
@@ -568,7 +569,7 @@ export const stackQuestion: QuestionGenerator = {
         stackElementsString += `\n| ${i} | ${stackElementsValues[i]} |`
       }
       // add the new line to the table for the extra feature #div_my-5#
-      stackElementsString += `\n|#div_my-5#| |`
+      stackElementsString += `\n|#div_my-5?td#| |`
     }
 
     /*
@@ -716,7 +717,7 @@ export const stackQuestion: QuestionGenerator = {
       }
 
       // add question to write down the array
-      inputText += `|${stackName}.toString()|{{input-${index}####}}|\n`
+      inputText += `|${stackName}.toString()|{{input-${index}####1,2,3,4}}|\n`
       correctAnswers[`input-${index}`] = stack.toString()
       correctAnswers[`input-${index}-format`] = "toString"
 
@@ -725,6 +726,8 @@ export const stackQuestion: QuestionGenerator = {
       // generate the input fields for the operations (if either getTop, size or amount)
       // if push, we don't ask the user for input
       // last question is to write down the array
+
+      console.log(correctAnswers)
 
       question = {
         type: "MultiFreeTextQuestion",
