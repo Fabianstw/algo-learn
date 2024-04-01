@@ -12,7 +12,7 @@ export const boldRegex = /\*\*([^*]+)\*\*/
 export const italicRegex = /\*([^*]+)\*/
 export const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/
 export const tableRegex = /^(\|(?:[^\r\n|]*\|?)+(\r?\n\|(?:[^\r\n|]*\|?)+)*)/m
-export const inputRegex = /\{\{(.*?)\}\}/
+export const inputRegex = /\{\{(.*?#.*?)\}\}/ // match at least on # to be an input
 export const listRegex = /^((?:\s*[-*][^*].*(\r?\n|$))+)/m
 
 // TODO check the regexes for the table and list again
@@ -92,6 +92,7 @@ export function parseMarkdown(md: string): ParseTree {
         return [...parseMarkdown(before), node, ...parseMarkdown(after)]
       }
       if (kind === "input") {
+        console.log(match[1])
         const node = {
           kind,
           child: match[1],

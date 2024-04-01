@@ -50,7 +50,7 @@ export class Queue {
     }
     // There is a faster possible implementation,
     // but this is easier to understand
-    let min = this.queue[this.front + 1]
+    let min = Number.MAX_VALUE
     const helper: number[] = this.toString()
       .replaceAll("[", "")
       .replaceAll("]", "")
@@ -76,7 +76,7 @@ export class Queue {
     }
     // There is a faster possible implementation,
     // but this is easier to understand
-    let min = this.queue[this.front + 1]
+    let min = Number.MAX_SAFE_INTEGER
     let secondMin = Number.MAX_SAFE_INTEGER
     const helper: number[] = this.toString()
       .replaceAll("[", "")

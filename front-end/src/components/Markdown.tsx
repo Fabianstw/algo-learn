@@ -152,7 +152,7 @@ export const MarkdownTreeNode: FunctionComponent<{
     )
   }
   if (parseTreeNode.kind === "input") {
-    if (!state) throw new Error("State is required for input")
+    if (!state) throw new Error("State is required for input for: " + parseTreeNode.child)
     if (!setText) throw new Error("setText is required for input")
     return <CustomInput id={parseTreeNode.child} state={state} setText={setText} />
   }
