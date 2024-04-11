@@ -254,32 +254,32 @@ function generateCorrectAnswersQueue(
   random: Random,
   lang: Language,
 ) {
-  let answers: string[] = []
+  const answers: Set<string> = new Set<string>()
   if (queueOverFlowError) {
-    answers.push(t(answerOptionList, lang, random.choice(["overFlowErrorV1", "overFlowErrorV2"])))
+    answers.add(t(answerOptionList, lang, random.choice(["overFlowErrorV1", "overFlowErrorV2"])))
   } else {
     if (queue.getCurrentNumberOfElements() === queue.getSize()) {
-      answers.push(t(answerOptionList, lang, random.choice(["queueFullV1", "queueFullV2"]), [queueName]))
+      answers.add(t(answerOptionList, lang, random.choice(["queueFullV1", "queueFullV2"]), [queueName]))
     }
     if (queue.getCurrentNumberOfElements() === 0) {
-      answers.push(
+      answers.add(
         t(answerOptionList, lang, random.choice(["queueEmptyV1", "queueEmptyV2"]), [queueName]),
       )
     } else {
       // get the front element
       // front element is the next element to get dequeued
-      answers.push(
+      answers.add(
         t(answerOptionList, lang, random.choice(["queueFrontV1", "queueFrontV2"]), [
           queueName,
           queue.getFront().toString(),
         ]),
       )
       // get the rear element
-      answers.push(t(answerOptionList, lang, "queueRearV1", [queueName, queue.getRear().toString()]))
+      answers.add(t(answerOptionList, lang, "queueRearV1", [queueName, queue.getRear().toString()]))
       // add the answer to dequeue (same as a front element)
-      answers.push(t(answerOptionList, lang, "queueDequeueV1", [queueName, queue.getFront().toString()]))
+      answers.add(t(answerOptionList, lang, "queueDequeueV1", [queueName, queue.getFront().toString()]))
       // get the minimum element
-      answers.push(t(answerOptionList, lang, "minFindV1", [queueName, queue.minFind().toString()]))
+      answers.add(t(answerOptionList, lang, "minFindV1", [queueName, queue.minFind().toString()]))
     }
     if (
       queue.getCurrentNumberOfElements() !== queue.getSize() &&
@@ -288,17 +288,17 @@ function generateCorrectAnswersQueue(
       let toStringQueue: string = queue.toString()
       const enqueueValue = random.int(1, 20)
       toStringQueue += `,${enqueueValue}`
-      answers.push(
+      answers.add(
         t(answerOptionList, lang, "queueEnqueueV1", [enqueueValue.toString(), queueName, toStringQueue]),
       )
       random.choice([true, false])
-        ? answers.push(
+        ? answers.add(
             t(answerOptionList, lang, random.choice(["queueFullV1N", "queueFullV2N"]), [queueName]),
           )
-        : answers.push(t(answerOptionList, lang, "queueEmptyV1N", [queueName]))
+        : answers.add(t(answerOptionList, lang, "queueEmptyV1N", [queueName]))
     }
     const freeElements = (queue.getSize() - queue.getCurrentNumberOfElements()).toString()
-    answers.push(
+    answers.add(
       random.choice([
         t(answerOptionList, lang, "currentNumberOfElements", [
           queueName,
@@ -311,14 +311,11 @@ function generateCorrectAnswersQueue(
       ]),
     )
 
-    answers.push(t(answerOptionList, lang, "getQueueV1", [queueName, queue.getQueue()]))
+    answers.add(t(answerOptionList, lang, "getQueueV1", [queueName, queue.getQueue()]))
   }
 
-  answers = random.subset(
-    random.shuffle(answers),
-    answers.length >= 4 ? random.int(2, 4) : answers.length,
-  )
-  return { answers }
+  const answerList: string[] = random.shuffle([...answers])
+  return { answerList }
 }
 
 /**
@@ -360,10 +357,7 @@ function generateWrongAnswersQueue(
       answers.add(t(answerOptionList, lang, "minFindV1", [queueName, queue.minFindSecond().toString()]))
     }
 
-    if (
-      queue.getCurrentNumberOfElements() !== queue.getSize() &&
-      queue.getCurrentNumberOfElements() !== 0
-    ) {
+    if (queue.getCurrentNumberOfElements() !== queue.getSize()) {
       random.choice([true, false])
         ? answers.add(
             t(answerOptionList, lang, random.choice(["queueFullV1", "queueFullV2"]), [queueName]),
@@ -399,38 +393,39 @@ function generateWrongAnswersQueue(
     }
   }
 
-  random.choice([true, false])
-    ? queue.getCurrentNumberOfElements() === queue.getSize()
-      ? answers.add(
-          t(answerOptionList, lang, random.choice(["queueFullV1N", "queueFullV2N"]), [queueName]),
-        )
-      : null
-    : queue.getCurrentNumberOfElements() === 0
-      ? answers.add(t(answerOptionList, lang, "queueEmptyV1N", [queueName]))
-      : null
+  queue.getCurrentNumberOfElements() === queue.getSize()
+    ? answers.add(
+        t(answerOptionList, lang, random.choice(["queueFullV1N", "queueFullV2N"]), [queueName]),
+      )
+    : null
+  queue.getCurrentNumberOfElements() === 0
+    ? answers.add(t(answerOptionList, lang, "queueEmptyV1N", [queueName]))
+    : null
 
+  const freeElements =
+    queue.getCurrentNumberOfElements() === queue.getSize()
+      ? queue.getSize() - queue.getCurrentNumberOfElements() + 1
+      : queue.getSize() - queue.getCurrentNumberOfElements() + random.choice([-1, 1])
   answers.add(
     random.choice([
       t(answerOptionList, lang, "currentNumberOfElements", [
         queueName,
         (queue.getCurrentNumberOfElements() + random.choice([-1, 1])).toString(),
       ]),
-      t(answerOptionList, lang, "currentFreeElement", [
+      t(answerOptionList, lang, freeElements === 1 ? "currentFreeElementS" : "currentFreeElementP", [
         queueName,
-        queue.getCurrentNumberOfElements() === queue.getSize()
-          ? (queue.getSize() - queue.getCurrentNumberOfElements() + 1).toString()
-          : (queue.getSize() - queue.getCurrentNumberOfElements() + random.choice([-1, 1])).toString(),
+        freeElements.toString(),
       ]),
     ]),
   )
 
   if (queue.getCurrentNumberOfElements() <= 1) {
-    const newQueue: string[] = queue.getQueue().split(",")
+    const newQueue: string[] = queue.getQueue().split(",") // getQueue -> [-1,-1,-1,x,-1] => pop possible
     newQueue.pop()
     answers.add(t(answerOptionList, lang, "getQueueV1", [queueName, newQueue.join(",")]))
     const newValue = random.int(1, 20).toString()
     newQueue.push(newValue)
-    answers.add(t(answerOptionList, lang, "getQueueV1", [newValue, queueName, newQueue.join(",")]))
+    answers.add(t(answerOptionList, lang, "getQueueV1", [queueName, newQueue.join(",")]))
     if (queue.getCurrentNumberOfElements() === 0) {
       answers.add(t(answerOptionList, lang, "minFindV1", [queueName, random.int(1, 20).toString()]))
       // next to dequeue is -1
@@ -454,10 +449,8 @@ function generateWrongAnswersQueue(
     Array.from({ length: newQueue.length - 1 }, (_, i) => i),
     2,
   )
-  console.log("swapIndex", swapIndex)
   ;[newQueue[swapIndex[0]], newQueue[swapIndex[1]]] = [newQueue[swapIndex[1]], newQueue[swapIndex[0]]]
   if (newQueue.join(",") !== getQueue) {
-    console.log("newQueue", newQueue.join(","))
     answers.add(t(answerOptionList, lang, "getQueueV1", [queueName, newQueue.join(",")]))
   }
 
@@ -497,8 +490,7 @@ export const queueQuestion: QuestionGenerator = {
       )
     }
 
-    let variant = parameters.variant as "choice" | "input"
-    variant = "choice"
+    const variant = parameters.variant as "choice" | "input"
 
     const queueName = random.choice("ABCQU".split(""))
     const queueSize = random.choice([4, 5, 6, 7, 8]) // Using only 8 values here, because it is not able to resize
@@ -506,8 +498,8 @@ export const queueQuestion: QuestionGenerator = {
     const queueOverFlowError =
       variant === "choice"
         ? random.weightedChoice([
-            [true, 0.15],
-            [false, 0.85],
+            [true, 0.1],
+            [false, 0.9],
           ])
         : false
 
@@ -515,7 +507,7 @@ export const queueQuestion: QuestionGenerator = {
     // increase or decrease is not possible, when there is no dynamic queue
     // and startElements not so much variation like in stack
     const startElementsAmount = queueOverFlowError
-      ? random.int(queueSize - 4, queueSize - 1)
+      ? random.int(queueSize - Math.ceil(queueSize * 0.5), queueSize - 1)
       : random.int(0, queueSize - 1)
 
     const startElements: number[] = []
@@ -560,20 +552,36 @@ export const queueQuestion: QuestionGenerator = {
         lang,
       )
 
+      let i = 0
+      let j = 0
       let allAnswers = []
-      allAnswers.push(...correctAnswers.answers)
-      const length = allAnswers.length
-      for (let i = 0; i < 6 - length; i++) {
-        if (i < wrongAnswers.answers.length) {
-          allAnswers.push(wrongAnswers.answers[i])
+      allAnswers.push(correctAnswers.answerList[i])
+      i++
+      while (
+        allAnswers.length < 6 &&
+        (i < correctAnswers.answerList.length || j < wrongAnswers.answers.length)
+      ) {
+        let cOf = random.choice([true, false])
+        if (i >= correctAnswers.answerList.length) {
+          cOf = false
+        }
+        if (j >= wrongAnswers.answers.length) {
+          cOf = true
+        }
+        if (cOf) {
+          allAnswers.push(correctAnswers.answerList[i])
+          i++
+        } else {
+          allAnswers.push(wrongAnswers.answers[j])
+          j++
         }
       }
 
       allAnswers = random.shuffle(allAnswers)
 
       const correctAnswerIndices = []
-      for (let i = 0; i < correctAnswers.answers.length; i++) {
-        correctAnswerIndices.push(allAnswers.indexOf(correctAnswers.answers[i]))
+      for (let i = 0; i < correctAnswers.answerList.length; i++) {
+        correctAnswerIndices.push(allAnswers.indexOf(correctAnswers.answerList[i]))
       }
 
       const queue = generatedOperations.queue
@@ -655,7 +663,7 @@ export const queueQuestion: QuestionGenerator = {
           correctAnswers[`numElements-${index}`] = operation.numberElements
         }
         if (Object.prototype.hasOwnProperty.call(operation, "getFront")) {
-          inputText += `| ${queueName}.getFront() | {{getFront-${index}####}} |\n`
+          inputText += `| ${queueName}.peekHead() | {{getFront-${index}####}} |\n`
           correctAnswers[`getFront-${index}`] = operation.getFront
         }
         index++
@@ -666,10 +674,10 @@ export const queueQuestion: QuestionGenerator = {
           ? random.choice(["full", "part"])
           : "full"
       if (fullOrPartQueue === "full") {
-        inputText += `|${queueName}.getQueue()|{{getQueue-${index}####1,2,3,4}}|`
+        inputText += `|${queueName}.getQueue()|{{getQueue-${index}####[2,-1,-1,1]}}|`
         correctAnswers[`getQueue-${index}`] = operationsFreeText.queue.getQueue()
       } else {
-        inputText += `|${queueName}.toString()|{{toString-${index}####1,2,3,4}}|`
+        inputText += `|${queueName}.toString()|{{toString-${index}####[1,2,3,4]}}|`
         correctAnswers[`toString-${index}`] = operationsFreeText.queue.toString()
       }
       inputText += `|#div_my-5?border_none?av_middle?ah_center?table_w-full#| |`

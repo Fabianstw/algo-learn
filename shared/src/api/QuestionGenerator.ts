@@ -186,6 +186,7 @@ export type FreeTextFeedbackFunction = (
 /** The signature of the function that checks the syntax or basic format. */
 export type FreeTextFormatFunction = (
   answer: FreeTextAnswer,
+  fieldID: string,
 ) => { valid: boolean; message?: string } | Promise<{ valid: boolean; message?: string }>
 
 export interface MultiFreeTextQuestion extends QuestionBase {

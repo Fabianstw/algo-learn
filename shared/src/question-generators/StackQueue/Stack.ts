@@ -15,6 +15,15 @@ export class Stack {
     this.resize = resize
   }
 
+  setSize(size: number): void {
+    this.size = size
+    const newStack = new Array(this.size).fill(math.NaN) as number[]
+    for (let i = 0; i <= this.currentPosition; i++) {
+      newStack[i] = this.stack[i]
+    }
+    this.stack = newStack
+  }
+
   /**
    * This method pushes an element to the stack
    * @param element The element to push
@@ -56,6 +65,30 @@ export class Stack {
     } else {
       throw new Error("The stack is empty")
     }
+  }
+
+  getMin(): number {
+    let min = this.stack[0]
+    for (let i = 1; i <= this.currentPosition; i++) {
+      if (this.stack[i] < min) {
+        min = this.stack[i]
+      }
+    }
+    return min
+  }
+
+  getSecondMin(): number {
+    let min = this.stack[0]
+    let secondMin = this.stack[0]
+    for (let i = 1; i <= this.currentPosition; i++) {
+      if (this.stack[i] < min) {
+        secondMin = min
+        min = this.stack[i]
+      } else if (this.stack[i] < secondMin) {
+        secondMin = this.stack[i]
+      }
+    }
+    return secondMin
   }
 
   /**
@@ -102,7 +135,8 @@ export class Stack {
   }
 
   getStack(): number[] {
-    return this.stack
+    // only return a copy
+    return this.stack.slice(0, this.currentPosition + 1)
   }
 
   /**

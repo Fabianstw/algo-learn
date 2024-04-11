@@ -59,6 +59,7 @@ const translations: Translations = {
 const answerOptionList: Translations = {
   en: {
     overFlowErrorV1: "We get an overflow error",
+    overFlowErrorV2: "We insert more elements into the Stack {{0}} than it could store",
     overFlowErrorV1N: "We don't get an overflow error",
     stackFullV1: "The Stack {{0}} is full",
     stackFullV1N: "The Stack {{0}} is not full",
@@ -67,19 +68,32 @@ const answerOptionList: Translations = {
     bottomElementV1: "In the Stack {{0}} the bottom element is {{1}}",
     topElementV1: "The top element of the Stack {{0}} is {{1}}",
     couldStoreElementsV1: "The Stack {{0}} could store {{1}} elements",
-    currentlyStoreElementsV1: "The Stack {{0}} currently stores {{1}} elements",
-    pushMoreCouldStoreV1:
+    currentlyStoreElementsV1S: "The Stack {{0}} currently stores {{1}} element",
+    currentlyStoreElementsV1P: "The Stack {{0}} currently stores {{1}} element",
+    pushMoreCouldStoreV1S:
+      "Pushing {{0}} value onto the Stack {{1}} will increase the number of elements stored by {{0}}",
+    pushMoreCouldStoreV1P:
       "Pushing {{0}} values onto the Stack {{1}} will increase the number of elements stored by {{0}}",
-    pushMoreCouldStoreV1N:
+    pushMoreCouldStoreV1NS:
+      "Pushing {{0}} value onto the Stack {{1}} will not increase the number of elements stored",
+    pushMoreCouldStoreV1NP:
       "Pushing {{0}} values onto the Stack {{1}} will not increase the number of elements stored",
-    pushMoreCouldIncrSizeV1:
+    pushMoreCouldIncrSizeV1S:
+      "Pushing {{0}} value onto the Stack {{1}} will increase the size of the Stack to {{2}}",
+    pushMoreCouldIncrSizeV1P:
       "Pushing {{0}} values onto the Stack {{1}} will increase the size of the Stack to {{2}}",
-    pushMoreCouldIncrSizeV1N:
+    pushMoreCouldIncrSizeV1NS:
+      "Pushing {{0}} value onto the Stack {{1}} will not increase the size of the Stack",
+    pushMoreCouldIncrSizeV1NP:
       "Pushing {{0}} values onto the Stack {{1}} will not increase the size of the Stack",
-    popForQuaterV1: "Popping {{0}} values from the Stack {{1}} will decrease the size by 4",
+    popForQuaterV1S: "Popping {{0}} value from the Stack {{1}} will divide the size by 4",
+    popForQuaterV1P: "Popping {{0}} values from the Stack {{1}} will divide the size by 4",
+    minElementV1: "The minimum element in the Stack {{0}} is {{1}}",
+    toStringV1: "The Stack {{0}} is currently {{1}}",
   },
   de: {
     overFlowErrorV1: "Wir bekommen einen Overflow Fehler",
+    overFlowErrorV2: "Wir fügen mehr Elemente in den Stack {{0}} ein, als er speichern könnte",
     overFlowErrorV1N: "Wir bekommen keinen Overflow Fehler",
     stackFullV1: "Der Stack {{0}} ist voll",
     stackFullV1N: "Der Stack {{0}} ist nicht voll",
@@ -88,16 +102,28 @@ const answerOptionList: Translations = {
     bottomElementV1: "Im Stack {{0}} ist das unterste Element {{1}}",
     topElementV1: "Das oberste Element des Stacks {{0}} ist {{1}}",
     couldStoreElementsV1: "Der Stack {{0}} könnte {{1}} Elemente speichern",
-    currentlyStoreElementsV1: "Der Stack {{0}} speichert aktuell {{1}} Elemente",
-    pushMoreCouldStoreV1:
+    currentlyStoreElementsV1S: "Der Stack {{0}} speichert aktuell {{1}} Element",
+    currentlyStoreElementsV1P: "Der Stack {{0}} speichert aktuell {{1}} Elemente",
+    pushMoreCouldStoreV1S:
+      "Das Pushen von einem Element auf den Stack {{1}} wird die Anzahl der gespeicherten Elemente um {{0}} erhöhen",
+    pushMoreCouldStoreV1P:
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Anzahl der gespeicherten Elemente um {{0}} erhöhen",
-    pushMoreCouldStoreV1N:
+    pushMoreCouldStoreV1NS:
+      "Das Pushen von einem Element auf den Stack {{1}} wird die Anzahl der gespeicherten Elemente nicht erhöhen",
+    pushMoreCouldStoreV1NP:
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Anzahl der gespeicherten Elemente nicht erhöhen",
-    pushMoreCouldIncrSizeV1:
+    pushMoreCouldIncrSizeV1S:
+      "Das Pushen von einem Element auf den Stack {{1}} wird die Größe des Stacks auf {{2}} erhöhen",
+    pushMoreCouldIncrSizeV1P:
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Größe des Stacks auf {{2}} erhöhen",
-    pushMoreCouldIncrSizeV1N:
+    pushMoreCouldIncrSizeV1NS:
+      "Das Pushen von einem Element auf den Stack {{1}} wird die Größe des Stacks nicht erhöhen",
+    pushMoreCouldIncrSizeV1NP:
       "Das Pushen von {{0}} Elementen auf den Stack {{1}} wird die Größe des Stacks nicht erhöhen",
-    popForQuaterV1: "Das poppen von {{0}} Elementen vom Stack {{1}} wird die Größe um 4 verringern",
+    popForQuaterV1S: "Das poppen von einem Element vom Stack {{1}} wird die Größe um 4 teilen",
+    popForQuaterV1P: "Das poppen von {{0}} Elementen vom Stack {{1}} wird die Größe um 4 teilen",
+    minElementV1: "Das kleinste Element im Stack {{0}} ist {{1}}",
+    toStringV1: "Der Stack {{0}} ist aktuell {{1}}",
   },
 }
 
@@ -125,6 +151,8 @@ function generateOperationsStack(
   for (const value of elements) {
     stack.push(value)
   }
+  stack.setSize(stackSize) // set size to stack size
+
   let operations: string[] = []
   // Differ between the two cases
   // if true, create an operation list, in which we exceed the max array size
@@ -143,13 +171,17 @@ function generateOperationsStack(
         : operations.push(stackName + ".getTop()")
     }
     operations = random.shuffle(operations)
+    console.log(stack.getStack())
+    console.log(operations)
     // do those operations until we get an overflow error
     for (let i = 0; i < operations.length; i++) {
       const value = operations[i].match(/\((.*?)\)/)
       if (value !== null) {
         if (operations[i].includes("push")) {
           // get the value from inside the ()
-          stack.push(parseInt(value[1]))
+          stack.push(parseInt(value[1])) // possible to push, because we theoretically have space
+        } else {
+          stack.getTop() // possible to pop, because we have elements
         }
       }
     }
@@ -163,7 +195,7 @@ function generateOperationsStack(
           ? true
           : !resize && stack.getCurrentPosition() === stackSize - 1
             ? false
-            : increase
+            : increase // if we want to increase the stack, we push more often (resizing to new size)
               ? random.weightedChoice([
                   [true, 0.7],
                   [false, 0.3],
@@ -201,6 +233,7 @@ function generateOperationsFreetextStack(
   for (const value of elements) {
     stack.push(value)
   }
+  stack.setSize(stackSize) // set size to stack size
 
   function ppORsizeDecider(lastOperation: { [key: string]: string }, i: number): boolean {
     let ppORsize = random.weightedChoice([
@@ -320,9 +353,11 @@ function generateCorrectAnswersStack(
   random: Random,
   lang: Language,
 ) {
-  const answers = []
+  const answers: Set<string> = new Set<string>()
   if (stackOverflowError) {
-    answers.push(t(answerOptionList, lang, "overFlowErrorV1"))
+    answers.add(
+      t(answerOptionList, lang, random.choice(["overFlowErrorV1", "overFlowErrorV2"]), [stackName]),
+    )
     /*
     random.choice([true, false])
       ? answers.push(
@@ -332,49 +367,64 @@ function generateCorrectAnswersStack(
      */
     // more correct answers here???
   } else {
-    // TODO use the same sentence logic, but vary between sentence structure
     if (stack.getCurrentPosition() === stack.getSize()) {
-      answers.push(t(answerOptionList, lang, "stackFullV1", [stackName]))
+      answers.add(t(answerOptionList, lang, "stackFullV1", [stackName]))
     }
     if (stack.getCurrentPosition() === 0) {
-      answers.push(t(answerOptionList, lang, "stackEmptyV1", [stackName]))
+      answers.add(t(answerOptionList, lang, "stackEmptyV1", [stackName]))
     } else {
-      answers.push(
+      answers.add(
         t(answerOptionList, lang, "bottomElementV1", [stackName, stack.getStack()[0].toString()]),
       )
-    }
-    if (stack.getCurrentPosition() > 0) {
-      answers.push(
-        t(answerOptionList, lang, "topElementV1", [stackName, stack.getTopValue().toString()]),
-      )
+      answers.add(t(answerOptionList, lang, "topElementV1", [stackName, stack.getTopValue().toString()]))
+      answers.add(t(answerOptionList, lang, "minElementV1", [stackName, stack.getMin().toString()]))
     }
 
-    answers.push(
+    answers.add(
       t(answerOptionList, lang, "couldStoreElementsV1", [stackName, stack.getSize().toString()]),
     )
-    answers.push(
-      t(answerOptionList, lang, "currentlyStoreElementsV1", [
-        stackName,
-        stack.getCurrentPosition().toString(),
-      ]),
+    answers.add(
+      t(
+        answerOptionList,
+        lang,
+        stack.getCurrentPosition() === 1 ? "currentlyStoreElementsV1S" : "currentlyStoreElementsV1P",
+        [stackName, stack.getCurrentPosition().toString(), stack.getCurrentPosition() === 1 ? "" : "s"],
+      ),
     )
     if (dynamic) {
-      const increaseValue = (stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)).toString()
-      answers.push(t(answerOptionList, lang, "pushMoreCouldStoreV1", [increaseValue, stackName]))
-      answers.push(
-        t(answerOptionList, lang, "pushMoreCouldIncrSizeV1", [
-          increaseValue,
-          stackName,
-          (stack.getSize() * 2).toString(),
-        ]),
+      const increaseValue = stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)
+      answers.add(
+        t(
+          answerOptionList,
+          lang,
+          increaseValue === 1 ? "pushMoreCouldStoreV1S" : "pushMoreCouldStoreV1P",
+          [increaseValue.toString(), stackName],
+        ),
       )
+      answers.add(
+        t(
+          answerOptionList,
+          lang,
+          increaseValue === 1 ? "pushMoreCouldIncrSizeV1S" : "pushMoreCouldIncrSizeV1P",
+          [increaseValue.toString(), stackName, (stack.getSize() * 2).toString()],
+        ),
+      )
+      if (stack.getSize() >= 4) {
+        const quaterValue = stack.getCurrentPosition() - Math.floor(stack.getSize() / 4) + 1
+        answers.add(
+          t(answerOptionList, lang, quaterValue === 1 ? "popForQuaterV1S" : "popForQuaterV1P", [
+            quaterValue.toString(),
+            stackName,
+          ]),
+        )
+      }
     }
+
+    answers.add(t(answerOptionList, lang, "toStringV1", [stackName, stack.getStack().toString()]))
   }
-  // Shuffle the answers and return a subset 2 to 4 of those or if the answer length only 1 then 1 to 4
-  return random.subset(
-    answers,
-    random.int(answers.length === 1 ? 1 : 2, answers.length > 3 ? 4 : answers.length),
-  )
+  const answerList: string[] = Array.from(answers)
+  // Only Shuffle the answers
+  return random.shuffle(answerList)
 }
 
 /**
@@ -396,83 +446,143 @@ function generateWrongAnswerStack(
   lang: Language,
   amount: number,
 ): string[] {
-  const wrongAnswers: string[] = []
+  const wrongAnswers: Set<string> = new Set<string>()
   // either the wrong option we get or we don't get an overflow error
   if (stackOverflowError) {
-    wrongAnswers.push(t(answerOptionList, lang, "overFlowErrorV1N"))
+    wrongAnswers.add(t(answerOptionList, lang, "overFlowErrorV1N"))
   } else {
-    wrongAnswers.push(t(answerOptionList, lang, "overFlowErrorV1"))
+    wrongAnswers.add(
+      t(answerOptionList, lang, random.choice(["overFlowErrorV1", "overFlowErrorV2"]), [stackName]),
+    )
   }
+
+  wrongAnswers.add(
+    t(answerOptionList, lang, "couldStoreElementsV1", [stackName, (stack.getSize() * 2).toString()]),
+  )
+
+  wrongAnswers.add(
+    t(
+      answerOptionList,
+      lang,
+      stack.getCurrentPosition() + 1 === 1 ? "currentlyStoreElementsV1S" : "currentlyStoreElementsV1P",
+      [stackName, (stack.getCurrentPosition() + 1).toString()],
+    ),
+  )
 
   // check the stack size
   // check if full
   if (stack.getSize() === stack.getCurrentPosition()) {
-    wrongAnswers.push(t(answerOptionList, lang, "stackFullV1N", [stackName]))
+    wrongAnswers.add(t(answerOptionList, lang, "stackFullV1N", [stackName]))
   } else {
     stack.getSize() - stack.getCurrentPosition() < 3
-      ? wrongAnswers.push(t(answerOptionList, lang, "stackFullV1", [stackName]))
+      ? wrongAnswers.add(t(answerOptionList, lang, "stackFullV1", [stackName]))
       : null
   }
   // check if empty
   if (stack.getCurrentPosition() === 0) {
-    wrongAnswers.push(t(answerOptionList, lang, "stackEmptyV1N", [stackName]))
+    wrongAnswers.add(t(answerOptionList, lang, "stackEmptyV1N", [stackName]))
   } else {
     stack.getCurrentPosition() < 3
-      ? wrongAnswers.push(t(answerOptionList, lang, "stackEmptyV1", [stackName]))
+      ? wrongAnswers.add(t(answerOptionList, lang, "stackEmptyV1", [stackName]))
       : null
-  }
 
-  // check the top element
-  if (stack.getCurrentPosition() > 0) {
-    if (
-      stack.getStack()[stack.getCurrentPosition() - 1] !==
-      stack.getStack()[stack.getCurrentPosition() - 1]
-    ) {
-      wrongAnswers.push(
-        t(answerOptionList, lang, "topElementV1", [
-          stackName,
-          stack.getStack()[stack.getCurrentPosition() - 1].toString(),
-        ]),
-      )
-    }
+    const stackToString = stack.getStack()
+    stackToString.pop()
+    wrongAnswers.add(t(answerOptionList, lang, "toStringV1", [stackName, stackToString.toString()]))
+
     random.uniform() > 0.8
-      ? wrongAnswers.push(
+      ? wrongAnswers.add(
           t(answerOptionList, lang, "topElementV1", [stackName, random.int(1, 20).toString()]),
         )
       : null
   }
 
+  if (stack.getCurrentPosition() >= 2) {
+    if (stack.getMin() !== stack.getSecondMin()) {
+      wrongAnswers.add(
+        t(answerOptionList, lang, "minElementV1", [stackName, stack.getSecondMin().toString()]),
+      )
+    }
+
+    // check the top element
+    const stackToString = stack.getStack()
+    const stackLen = stack.getCurrentPosition()
+    if (stackToString[stackLen - 1] !== stackToString[stackLen - 2]) {
+      wrongAnswers.add(
+        t(answerOptionList, lang, "topElementV1", [stackName, stackToString[stackLen - 2].toString()]),
+      )
+    }
+
+    if (stackToString[0] !== stackToString[1]) {
+      wrongAnswers.add(
+        t(answerOptionList, lang, "bottomElementV1", [stackName, stackToString[1].toString()]),
+      )
+    }
+
+    // swap values inside the stack
+    // get two random different numbers from 0 to stack.length - 1
+    const index1 = random.int(0, stack.getCurrentPosition() - 1)
+    let index2 = random.int(0, stack.getCurrentPosition() - 1)
+    if (index1 === index2) {
+      index2 = (index2 + 1) % stack.getCurrentPosition()
+    }
+    ;[stackToString[index1], stackToString[index2]] = [stackToString[index2], stackToString[index1]]
+    if (stack.getStack().toString() !== stackToString.toString()) {
+      wrongAnswers.add(t(answerOptionList, lang, "toStringV1", [stackName, stackToString.toString()]))
+    }
+  }
+
   // re-declaring increaseValue to get different numbers
   if (!dynamic) {
-    let increaseValue = (stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)).toString()
-    wrongAnswers.push(t(answerOptionList, lang, "pushMoreCouldStoreV1", [increaseValue, stackName]))
-    increaseValue = (stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)).toString()
-    wrongAnswers.push(
-      t(answerOptionList, lang, "pushMoreCouldIncrSizeV1", [
-        increaseValue,
-        stackName,
-        (stack.getSize() * 2).toString(),
-      ]),
+    let increaseValue = stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)
+    wrongAnswers.add(
+      t(
+        answerOptionList,
+        lang,
+        increaseValue === 1 ? "pushMoreCouldStoreV1S" : "pushMoreCouldStoreV1P",
+        [increaseValue.toString(), stackName],
+      ),
+    )
+    increaseValue = stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)
+    wrongAnswers.add(
+      t(
+        answerOptionList,
+        lang,
+        increaseValue === 1 ? "pushMoreCouldIncrSizeV1S" : "pushMoreCouldIncrSizeV1P",
+        [increaseValue.toString(), stackName, (stack.getSize() * 2).toString()],
+      ),
     )
     let decreaseValue = stack.getCurrentPosition() - Math.floor(stack.getSize() * 0.25)
     if (decreaseValue > stack.getCurrentPosition()) decreaseValue += random.int(0, 1)
-    wrongAnswers.push(t(answerOptionList, lang, "popForQuaterV1", [decreaseValue.toString(), stackName]))
-  } else {
-    let increaseValue = (stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)).toString()
-    wrongAnswers.push(t(answerOptionList, lang, "pushMoreCouldStoreV1N", [increaseValue, stackName]))
-    increaseValue = (stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)).toString()
-    wrongAnswers.push(
-      t(answerOptionList, lang, "pushMoreCouldIncrSizeV1N", [
-        increaseValue,
+    wrongAnswers.add(
+      t(answerOptionList, lang, decreaseValue === 1 ? "popForQuaterV1S" : "popForQuaterV1P", [
+        decreaseValue.toString(),
         stackName,
-        (stack.getSize() * 2).toString(),
       ]),
+    )
+  } else {
+    let increaseValue = stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)
+    wrongAnswers.add(
+      t(
+        answerOptionList,
+        lang,
+        increaseValue === 1 ? "pushMoreCouldStoreV1NS" : "pushMoreCouldStoreV1NP",
+        [increaseValue.toString(), stackName],
+      ),
+    )
+    increaseValue = stack.getSize() - stack.getCurrentPosition() + random.int(1, 3)
+    wrongAnswers.add(
+      t(
+        answerOptionList,
+        lang,
+        increaseValue === 1 ? "pushMoreCouldIncrSizeV1NS" : "pushMoreCouldIncrSizeV1NP",
+        [increaseValue.toString(), stackName, (stack.getSize() * 2).toString()],
+      ),
     )
     // No question about decreasing here
   }
-  // TODO: Missing more wrong answers
-
-  return random.subset(wrongAnswers, amount > wrongAnswers.length ? wrongAnswers.length : amount)
+  const answerList = Array.from(wrongAnswers)
+  return random.subset(answerList, amount > answerList.length ? answerList.length : amount)
 }
 
 export const stackQuestion: QuestionGenerator = {
@@ -547,7 +657,7 @@ export const stackQuestion: QuestionGenerator = {
 
     // pick a number between 0 and stack size
     const stackElementsAmount = stackOverflowError
-      ? random.int(stackSize - 4, stackSize - 1)
+      ? random.int(Math.ceil(stackSize * 0.5), stackSize - 1)
       : dynamic
         ? increase
           ? random.int(stackSize - 3, stackSize - 1)
@@ -573,8 +683,8 @@ export const stackQuestion: QuestionGenerator = {
     }
 
     /*
-    Variation between multiple choice and input
-     */
+        Variation between multiple choice and input
+         */
     let question: Question
     if (variant === "choice") {
       const generation = generateOperationsStack(
@@ -607,9 +717,32 @@ export const stackQuestion: QuestionGenerator = {
         amount,
       )
 
-      const allAnswers = correctAnswers.concat(wrongAnswers)
-      random.shuffle(allAnswers)
-      allAnswers.splice(0, 0, "**Das müssen noch mehr kompliziertere Antworten sein**")
+      let allAnswers = []
+      let i = 0
+      let j = 0
+      allAnswers.push(correctAnswers[i])
+      i++
+      while (allAnswers.length < 6 && (i < correctAnswers.length || j < wrongAnswers.length)) {
+        let wOt = random.choice([true, false])
+        if (i > correctAnswers.length - 1) {
+          wOt = false
+        }
+        if (j > wrongAnswers.length - 1) {
+          wOt = true
+        }
+        if (wOt) {
+          allAnswers.push(correctAnswers[i])
+          i++
+        } else {
+          allAnswers.push(wrongAnswers[j])
+          j++
+        }
+      }
+      allAnswers = random.shuffle(allAnswers)
+
+      if (allAnswers.length < 6) {
+        throw new Error("Not enough answers")
+      }
 
       const correctAnswerIndex = []
       for (let i = 0; i < correctAnswers.length; i++) {
@@ -708,7 +841,7 @@ export const stackQuestion: QuestionGenerator = {
             correctAnswers[`input-${index}`] = stack.getSize().toString()
             correctAnswers[`input-${index}-format`] = "getSize"
           } else if (Object.prototype.hasOwnProperty.call(operation, "amount")) {
-            inputText += `|${stackName}.getCurrentPosition()|{{input-${index}####}}|\n`
+            inputText += `|${stackName}.amountElements()|{{input-${index}####}}|\n`
             correctAnswers[`input-${index}`] = stack.getCurrentPosition().toString()
             correctAnswers[`input-${index}-format`] = "getCurrentPosition"
           }
@@ -717,7 +850,7 @@ export const stackQuestion: QuestionGenerator = {
       }
 
       // add question to write down the array
-      inputText += `|${stackName}.toString()|{{input-${index}####1,2,3,4}}|\n`
+      inputText += `|${stackName}.toString()|{{input-${index}####[1,2,3,4]}}|\n`
       correctAnswers[`input-${index}`] = stack.toString()
       correctAnswers[`input-${index}-format`] = "toString"
 

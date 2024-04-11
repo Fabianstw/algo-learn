@@ -61,7 +61,6 @@ export class Queue {
         min = helper[i]
       }
     }
-    console.log(min)
     return min
   }
 
