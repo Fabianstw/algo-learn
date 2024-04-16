@@ -171,8 +171,6 @@ function generateOperationsStack(
         : operations.push(stackName + ".getTop()")
     }
     operations = random.shuffle(operations)
-    console.log(stack.getStack())
-    console.log(operations)
     // do those operations until we get an overflow error
     for (let i = 0; i < operations.length; i++) {
       const value = operations[i].match(/\((.*?)\)/)
@@ -859,8 +857,6 @@ export const stackQuestion: QuestionGenerator = {
       // generate the input fields for the operations (if either getTop, size or amount)
       // if push, we don't ask the user for input
       // last question is to write down the array
-
-      console.log(correctAnswers)
 
       question = {
         type: "MultiFreeTextQuestion",

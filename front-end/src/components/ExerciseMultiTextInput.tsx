@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FreeTextFeedback, MultiFreeTextQuestion } from "@shared/api/QuestionGenerator.ts"
 import { InteractWithQuestion, MODE } from "@/components/InteractWithQuestion.tsx"
 import { Markdown } from "@/components/Markdown.tsx"
@@ -36,6 +36,17 @@ export function ExerciseMultiTextInput({
     text: {},
     formatFeedback: {},
   })
+
+  // clear the modeID of state
+  useEffect(() => {
+    // This function runs when the component mounts
+    setState({
+      mode: !question.fillOutAll ? "draft" : "invalid",
+      modeID: {},
+      text: {},
+      formatFeedback: {},
+    })
+  }, [question.fillOutAll])
 
   const { mode, text, feedbackObject } = state
 
@@ -139,85 +150,3 @@ export function ExerciseMultiTextInput({
     </InteractWithQuestion>
   )
 }
-
-/*
-
-{parts.map((part, index) => {
-        return part.startsWith("{#{") && part.endsWith("}#}") ? (
-          (() => {
-            part = part.replaceAll("{#{", "").replaceAll("}#}", "")
-            return alignment[part] === "inline" ? (
-              <Fragment key={`inline-fragment-${index}`}>
-                <Input
-                  key={`inline-input-${index}`}
-                  autoFocus
-                  disabled={mode === "correct" || mode === "incorrect"}
-                  value={text[part] || ""}
-                  onChange={(e) => {
-                    setText(part, e.target.value)
-                  }}
-                  type="text"
-                  className="m-2 inline-block h-6 w-16"
-                />
-              </Fragment>
-            ) : alignment[part] === "oneline" ? (
-              <Fragment key={`oneline-fragment-${index}`}>
-                <div key={`oneline-div-${index}`} className="flex flex-wrap m-5">
-                  {part.split('|').map((inputID: string, indexOneline: number) => (
-                    <div key={`${index}-${indexOneline}`}
-                         className="flex place-items-center gap-4 pl-3 w-full md:w-1/2">
-                      {prompts[inputID] && <Markdown md={prompts[inputID]}/>}
-                      <Input
-                        key={`newline-input-${indexOneline}`}
-                        autoFocus
-                        disabled={mode === "correct" || mode === "incorrect"}
-                        value={text[inputID] || ""}
-                        onChange={(e) => {
-                          setText(inputID, e.target.value)
-                        }}
-                        type="text"
-                      />
-                      <div className={`flex items-center ${msgColor[inputID]}`}>
-                        <div>
-                          <Markdown md={formatFeedback[inputID]}/>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Fragment>
-            ) : (
-              <Fragment key={`newline-fragment-${index}`}>
-                <br/>
-                <br/>
-                <div key={index} className="flex place-items-center gap-2 pl-3 mr-4">
-                  {prompts[part] && <Markdown md={prompts[part]}/>}
-                  <Input
-                    key={`newline-input-${index}`}
-                    autoFocus
-                    disabled={mode === "correct" || mode === "incorrect"}
-                    value={text[part] || ""}
-                    onChange={(e) => {
-                      setText(part, e.target.value)
-                    }}
-                    type="text"
-                  />
-                  <div className={`flex h-12 items-center ${msgColor[part]}`}>
-                  <div>
-                      <Markdown md={formatFeedback[part]}/>
-                    </div>
-                  </div>
-                </div>
-                <br/>
-              </Fragment>
-            )
-          })()
-        ) : part.length > 0 ? (
-          <span key={`${index}-text`}>
-            <Markdown md={part}/>
-          </span>
-        ) : null
-      })}
-      <br/>
-
- */

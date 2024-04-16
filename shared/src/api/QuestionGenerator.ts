@@ -192,9 +192,6 @@ export type FreeTextFormatFunction = (
 export interface MultiFreeTextQuestion extends QuestionBase {
   type: "MultiFreeTextQuestion"
 
-  /** If all input fields need to be filled out. Defaults to false */
-  fillOutAll?: boolean
-
   /** The feedback function for this question; defaults to undefined */
   feedback?: FreeTextFeedbackFunction
 

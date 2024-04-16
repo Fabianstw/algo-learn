@@ -125,7 +125,6 @@ export class Stack {
   decreaseStack(): void {
     if (this.size >= 4) {
       this.size = Math.floor(this.size / 2)
-      console.log("Decreasing stack size to " + this.size)
       const newStack = new Array(this.size).fill(math.NaN) as number[]
       for (let i = 0; i < this.currentPosition; i++) {
         newStack[i] = this.stack[i]

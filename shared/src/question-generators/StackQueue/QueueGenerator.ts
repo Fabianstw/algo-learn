@@ -584,8 +584,6 @@ export const queueQuestion: QuestionGenerator = {
         correctAnswerIndices.push(allAnswers.indexOf(correctAnswers.answerList[i]))
       }
 
-      const queue = generatedOperations.queue
-      console.log(queue.getQueue())
       const operations = generatedOperations.operations
 
       question = {
@@ -688,8 +686,6 @@ export const queueQuestion: QuestionGenerator = {
       } else {
         inputText += "\n" + t(translations, lang, "toStringInfo")
       }
-
-      console.log(correctAnswers)
 
       question = {
         type: "MultiFreeTextQuestion",

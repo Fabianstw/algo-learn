@@ -92,7 +92,6 @@ export function parseMarkdown(md: string): ParseTree {
         return [...parseMarkdown(before), node, ...parseMarkdown(after)]
       }
       if (kind === "input") {
-        console.log(match[1])
         const node = {
           kind,
           child: match[1],
