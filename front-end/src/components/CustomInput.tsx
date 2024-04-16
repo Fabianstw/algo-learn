@@ -53,7 +53,12 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   const msgColor =
     state.modeID[inputID] !== "draft" && state.modeID[inputID] !== "initial"
       ? "mt-2 rounded bg-red-600 dark:bg-red-400 bg-opacity-50 p-2 text-sm"
-      : "mt-2 text-green-600 dark:text-green-400"
+      : "mt-2 text-green-600 dark:text-green-400 p-2 text-sm"
+
+  const msgColorSpace =
+    state.modeID[inputID] !== "draft" && state.modeID[inputID] !== "initial"
+      ? "mt-2 rounded p-2 text-sm"
+      : "mt-2 rounded p-2 text-sm"
 
   const sizeSplit = inputSize.split("_")
   let width = sizeSplit[0]
@@ -114,14 +119,16 @@ export const CustomInput: React.FC<CustomInputProps> = ({
         <div className="flex flex-row items-center">
           <div className="mr-2">
             {promptElement}
-            {inputPrompt ? (
+            {inputPrompt.length > 0 ? (
               <FeedbackComponent
                 inputID={inputID}
-                className="mt-2 rounded bg-opacity-100 pb-2 pt-2 text-sm"
+                className={`${msgColorSpace}`}
                 formatFeedback={state.formatFeedback}
                 feedback={false}
               />
-            ) : null}
+            ) : (
+              ""
+            )}
           </div>
           <div className="flex w-full flex-col">
             <Input
@@ -152,6 +159,10 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   return <>{inputElement}</>
 }
 
+/*
+className="mt-2 rounded bg-opacity-100 pb-2 pt-2 text-sm"
+ */
+
 interface Props {
   inputID: string
   className: string
@@ -163,7 +174,9 @@ export const FeedbackComponent: React.FC<Props> = ({ inputID, className, formatF
   return (
     <>
       {formatFeedback[inputID] && (
-        <div className={`${className}`}>{feedback ? formatFeedback[inputID] : <span>&nbsp;</span>}</div>
+        <div className={`${className}`}>
+          {feedback ? <Markdown md={formatFeedback[inputID]} /> : <span>&nbsp;</span>}
+        </div>
       )}
     </>
   )

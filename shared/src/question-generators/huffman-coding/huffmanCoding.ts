@@ -1,7 +1,6 @@
 // TODO: check if the table could be to wide to be represented as possible answer
 
 import { min } from "mathjs"
-import { validateParameters } from "@shared/api/Parameters.ts"
 import {
   FreeTextFeedbackFunction,
   FreeTextFormatFunction,
@@ -33,6 +32,7 @@ import {
 } from "@shared/question-generators/huffman-coding/GenerateWrongAnswers.ts"
 import Random from "@shared/utils/random.ts"
 import { t, tFunction, tFunctional, Translations } from "@shared/utils/translations.ts"
+import { validateParameters } from "../../api/Parameters.ts"
 
 /**
  * All text displayed text goes into the translation object.
@@ -53,7 +53,7 @@ What could be a correct **Huffman-Coding** for each char?`,
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
     multiInputText: `Suppose we have the following {{table#IL###}}, which represents how often each character 
-{{test#NL#*Char: *##}} 
+{{test#NL#**Char: **##}} 
 appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each character?
@@ -245,6 +245,7 @@ export function switchAllOneZeroString(correctWord: string) {
 /**
  * Creates the table for the markdown
  * @param wordArray the word arrays with frequency of each letter
+ * @param extraFeature
  */
 function convertDictToMdTable(wordArray: { [key: string]: any }, extraFeature: string = "none") {
   const header = Object.keys(wordArray)
@@ -352,7 +353,7 @@ export const huffmanCoding: QuestionGenerator = {
     } else {
       variant = random.choice(["input", "input2"])
     }
-    variant = "input2"
+    // variant = "choice2"
     let question: Question
     if (variant === "choice" || variant === "input") {
       let word = generateString(wordlength, random)
@@ -431,15 +432,15 @@ export const huffmanCoding: QuestionGenerator = {
 
       if (variant === "choice2") {
         const possibleAnswersTableString: string[] = []
-        possibleAnswersTableString.push("\n" + convertDictToMdTable(correctAnswerDict) + "\n")
+        possibleAnswersTableString.push("\n" + convertDictToMdTable(correctAnswerDict, "#sd#") + "\n")
         generateWrongAnswersDict(random, wordArray, correctAnswerTreeNode).forEach((element) => {
-          possibleAnswersTableString.push("\n" + convertDictToMdTable(element) + "\n")
+          possibleAnswersTableString.push("\n" + convertDictToMdTable(element, "#sd#") + "\n")
         })
 
         // shuffle the answers and find the correct index
         random.shuffle(possibleAnswersTableString)
         const correctAnswerIndex = possibleAnswersTableString.indexOf(
-          "\n" + convertDictToMdTable(correctAnswerDict) + "\n",
+          "\n" + convertDictToMdTable(correctAnswerDict, "#sd#") + "\n",
         )
 
         question = {
@@ -477,8 +478,17 @@ export const huffmanCoding: QuestionGenerator = {
 
         const feedback: FreeTextFeedbackFunction = ({ text }) => {
           // text is a provided using JSON.stringify, so we need to revert this
-          const textDict: unknown = JSON.parse(text)
-          console.log(textDict)
+          let textDict: unknown
+          try {
+            textDict = JSON.parse(text)
+          } catch (error) {
+            console.error("Invalid JSON:", text)
+            return {
+              correct: false,
+              message: tFunction(translations, lang).t("feedback.incomplete"),
+              correctAnswer: "The answer is not a valid JSON",
+            }
+          }
           function isStringDict(obj: unknown): obj is { [key: string]: string } {
             if (typeof obj !== "object" || obj === null) return false
             for (const key in obj) {
