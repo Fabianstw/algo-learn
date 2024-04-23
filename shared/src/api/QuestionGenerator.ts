@@ -187,7 +187,9 @@ export type FreeTextFeedbackFunction = (
 export type FreeTextFormatFunction = (
   answer: FreeTextAnswer,
   fieldID: string,
-) => { valid: boolean; message?: string } | Promise<{ valid: boolean; message?: string }>
+) =>
+  | { valid: boolean; message?: string; fullFeedback?: string }
+  | Promise<{ valid: boolean; message?: string; fullFeedback?: string }>
 
 export interface MultiFreeTextQuestion extends QuestionBase {
   type: "MultiFreeTextQuestion"
@@ -203,13 +205,8 @@ export interface MultiFreeTextQuestion extends QuestionBase {
    * provided answers. For example, it can be used to check whether the syntax of
    * the given answers is correct and to provide feedback on the syntax.
    */
-  checkFormat?: MultiFreeTextFormatFunction
+  checkFormat?: FreeTextFormatFunction
 }
-
-export type MultiFreeTextFormatFunction = (
-  answer: FreeTextAnswer,
-  id: string,
-) => { valid: boolean; message?: string } | Promise<{ valid: boolean; message?: string }>
 
 /**
  * QuestionGenerator type for generating questions.

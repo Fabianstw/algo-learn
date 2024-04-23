@@ -1,5 +1,5 @@
 // CustomInput2.tsx
-import React, { Fragment, useState } from "react"
+import React, { useState } from "react"
 import { FreeTextFeedback } from "@shared/api/QuestionGenerator.ts"
 import { MODE } from "@/components/InteractWithQuestion.tsx"
 import { Markdown } from "@/components/Markdown.tsx"
@@ -36,8 +36,8 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   const inputID = inputSplit[0]
   const inputAlign = inputSplit[1]
   const inputPrompt = inputSplit[2]
-  const inputSize = inputSplit[3]
-  const inputPlaceholder = inputSplit[4]
+  const inputPlaceholder = inputSplit[3]
+  const feedbackVariation = inputSplit[4] // case over -> overlay | new -> no overlay, move other stuff down
 
   // check if inputID exists in state
   if (!state.text[inputID]) {
@@ -46,36 +46,10 @@ export const CustomInput: React.FC<CustomInputProps> = ({
     state.formatFeedback[inputID] = ""
   }
 
-  const msgColorBorder =
-    state.modeID[inputID] !== "draft" && state.modeID[inputID] !== "initial"
-      ? "border-red-500 focus:border-red-500 focus:outline-none"
-      : ""
-  const msgColor =
-    state.modeID[inputID] !== "draft" && state.modeID[inputID] !== "initial"
-      ? "mt-2 rounded bg-red-600 dark:bg-red-400 p-2 text-sm"
-      : "mt-2 rounded bg-green-600 dark:bg-green-400 p-2 text-sm"
+  const inputBorderColor =
+    state.modeID[inputID] === "invalid" ? "border-red-500 focus:border-red-500" : ""
 
-  const sizeSplit = inputSize.split("_")
-  let width = sizeSplit[0]
-  let height = sizeSplit[1]
-
-  let align = ""
-  if (inputAlign === "IL") {
-    if (!width) width = "16"
-    if (!height) height = "6"
-    align = "m-2 inline-block h-" + height + " w-" + width
-  } else {
-    if (width) {
-      align = align + "w-" + width + " "
-    } else {
-      align = align + "w-full" + " "
-    }
-    if (height) {
-      align = align + "h-" + height + " "
-    } else {
-      align = align + "h-full" + " "
-    }
-  }
+  const align: string = "w-full h-full"
 
   let promptElement
   if (inputPrompt) {
@@ -89,38 +63,10 @@ export const CustomInput: React.FC<CustomInputProps> = ({
 
   const [isInputFocused, setIsInputFocused] = useState(false)
 
-  let inputElement
-  if (inputAlign === "IL") {
-    inputElement = (
-      <>
-        <span className="relative inline-block">
-          <Fragment key={`inline-fragment-${inputID}`}>
-            <Input
-              key={`newline-input-${inputID}`}
-              autoFocus
-              disabled={state.mode === "correct" || state.mode === "incorrect"}
-              value={state.text[inputID] || ""}
-              onChange={(e) => {
-                setText(inputID, e.target.value)
-              }}
-              type="text"
-              className={`${align}`}
-              placeholder={inputPlaceholder ? inputPlaceholder : ""}
-            />
-          </Fragment>
-          <FeedbackComponent
-            inputID={inputID}
-            className={`${msgColor} max-w-1/2  sm:max-w-screen absolute z-50 w-auto`}
-            formatFeedback={state.formatFeedback}
-            feedback={true}
-          />
-        </span>
-      </>
-    )
-  } else {
-    inputElement = (
-      <div>
-        {spacing}
+  const inputElement = (
+    <div>
+      {spacing}
+      <div className="flex flex-col">
         <div className="flex flex-row items-center">
           <div className="mr-2">{promptElement}</div>
 
@@ -133,43 +79,101 @@ export const CustomInput: React.FC<CustomInputProps> = ({
               onChange={(e) => {
                 setText(inputID, e.target.value)
               }}
-              onFocus={() => setIsInputFocused(true)} // Set isInputFocused to true when input is focused
-              onBlur={() => setIsInputFocused(false)} // Set isInputFocused to false when input loses focus
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               type="text"
-              className={`${msgColorBorder} ${align}`}
+              className={`${inputBorderColor} focus:outline-none`}
               placeholder={inputPlaceholder || ""}
             />
-            {isInputFocused && ( // Render FeedbackComponent only when input is focused
-              <FeedbackComponent
-                inputID={inputID}
-                className={`${msgColor} absolute left-0 z-50`}
-                formatFeedback={state.formatFeedback}
-                feedback={true}
-              />
-            )}
           </div>
         </div>
-        {spacing}
+        {isInputFocused && state.text[inputID] && (
+          <FeedbackComponent
+            inputID={inputID}
+            formatFeedback={state.formatFeedback}
+            mode={state.modeID}
+          />
+        )}
       </div>
-    )
-  }
+      {spacing}
+    </div>
+  )
 
   return <>{inputElement}</>
 }
 
-interface Props {
-  inputID: string
-  className: string
-  formatFeedback: { [key: string]: string }
-  feedback: boolean
-}
 
-export const FeedbackComponent: React.FC<Props> = ({ inputID, className, formatFeedback, feedback }) => {
+
+const FeedbackComponent = ({
+  inputID,
+  formatFeedback,
+  mode,
+}: {
+  inputID: string
+  formatFeedback: { [key: string]: string }
+  mode: { [p: string]: string }
+}) => {
+  console.log(mode[inputID])
+  const feedbackBackgroundColor = formatFeedback[inputID]
+    ? mode[inputID] === "draft"
+      ? "border-l-4 border-green-400"
+      : "border-l-4 border-red-400"
+    : ""
+  console.log(feedbackBackgroundColor)
   return (
-    <>
-      {formatFeedback[inputID] && (
-        <div className={`${className}`}>{feedback ? formatFeedback[inputID] : <span>&nbsp;</span>}</div>
-      )}
-    </>
+    <div className={`mt-2 p-2 ${feedbackBackgroundColor} `}>
+      {formatFeedback[inputID] && <span>{formatFeedback[inputID]}</span>}
+    </div>
   )
 }
+
+/*
+
+const FeedbackComponent = ({inputID, formatFeedback, mode}) => {
+  const feedbackBackgroundColor = formatFeedback[inputID] ? (mode[inputID] === "draft" ? "bg-green-400" : "bg-red-400") : "";
+
+  return (
+    <div
+      className={`absolute left-0 top-full z-10 ${feedbackBackgroundColor} border border-gray-300 dark:border-gray-700 shadow-md p-2 mt-1 rounded-md`}>
+      {formatFeedback[inputID] && (
+        <span>{formatFeedback[inputID]}</span>
+      )}
+    </div>
+  );
+};
+
+
+
+<div>
+    {spacing}
+    <div className="flex flex-row items-center">
+      <div className="mr-2">{promptElement}</div>
+
+      <div className={`${align} relative`}>
+        <Input
+          key={`newline-input-${inputID}`}
+          autoFocus
+          disabled={state.mode === "correct" || state.mode === "incorrect"}
+          value={state.text[inputID] || ""}
+          onChange={(e) => {
+            setText(inputID, e.target.value)
+          }}
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+          type="text"
+          className={`${inputBorderColor} mb-1 focus:outline-none w-full`}
+          placeholder={inputPlaceholder || ""}
+        />
+        {isInputFocused && state.text[inputID] && (
+          <FeedbackComponent
+            inputID={inputID}
+            formatFeedback={state.formatFeedback}
+            mode={state.modeID}
+          />
+        )}
+      </div>
+    </div>
+      {spacing}
+    </div>
+
+ */

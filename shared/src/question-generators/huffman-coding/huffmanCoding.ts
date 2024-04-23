@@ -47,13 +47,14 @@ const translations: Translations = {
     textTable: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each char?`,
-    feedbackInvalid: "Only 1 and 0 allowed Only 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowedOnly 1 and 0 allowed",
+    feedbackInvalid:
+      "Only 1 and 0 allowed. Only 1 and 0 allowed. Only 1 and 0 allowed. Only 1 and 0 allowed",
     bottomtext:
       "Hints for the Huffman-Code: If you have to choose between nodes with the same weight, " +
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
-    multiInputText: `Suppose we have the following {{table#IL###}}, which represents how often each character 
-{{test#NL#**Char: **##}} 
+    multiInputText: `Suppose we have the following table, which represents how often each character 
+{{test#NL#**Char: **##new}} 
 appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each character?
@@ -329,7 +330,11 @@ export const huffmanCoding: QuestionGenerator = {
       }
 
       // no format error
-      return { valid: true, message: text }
+      return {
+        valid: true,
+        message: text,
+        fullFeedback: "hahahahahhahahahhahahahahahöhahahahah \n> hasdasd",
+      }
     }
 
     /*
@@ -353,7 +358,7 @@ export const huffmanCoding: QuestionGenerator = {
     } else {
       variant = random.choice(["input", "input2"])
     }
-    // variant = "choice2"
+    variant = "input2"
     let question: Question
     if (variant === "choice" || variant === "input") {
       let word = generateString(wordlength, random)
@@ -466,7 +471,7 @@ export const huffmanCoding: QuestionGenerator = {
         for (const key in wordArray) {
           const fieldID = `index-${i}` // this is the unique ID for the input field
           fieldIDCharMap[fieldID] = key
-          inputFields += "|{{" + fieldID + "#TL#" + key + ": ##}}"
+          inputFields += "|{{" + fieldID + "#TL#" + key + ": #}}"
           if (i % 2 == 1) {
             inputFields += "|\n"
           }
