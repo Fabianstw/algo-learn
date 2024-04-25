@@ -21,7 +21,6 @@ export function ExerciseMultiTextInput({
 }) {
   const { playSound } = useSound()
   const { t } = useTranslation()
-  const [fFeedback, setFFeedback] = useState("")
 
   question.fillOutAll = question.fillOutAll ? question.fillOutAll : false
 
@@ -66,25 +65,22 @@ export function ExerciseMultiTextInput({
   function setText(fieldID: string, value: string) {
     setState((state) => ({ ...state, text: { ...state.text, [fieldID]: value } }))
     if (question.checkFormat) {
-      void Promise.resolve(question.checkFormat({ text: value }, fieldID)).then(
-        ({ valid, message, fullFeedback }) => {
-          setState({
-            ...state,
-            text: { ...state.text, [fieldID]: value },
-            modeID: {
-              ...state.modeID,
-              [fieldID]: valid ? "draft" : "invalid",
-            },
-            formatFeedback: {
-              ...state.formatFeedback,
-              [fieldID]: !valid ? (message ? message : "") : message ? message : "",
-            },
-            // call the func providing the modeID, because of the delay in setState
-            mode: checkOverallMode({ ...state.modeID, [fieldID]: valid ? "draft" : "invalid" }),
-          })
-          setFFeedback(fullFeedback ? fullFeedback : "")
-        },
-      )
+      void Promise.resolve(question.checkFormat({ text: value }, fieldID)).then(({ valid, message }) => {
+        setState({
+          ...state,
+          text: { ...state.text, [fieldID]: value },
+          modeID: {
+            ...state.modeID,
+            [fieldID]: valid ? "draft" : "invalid",
+          },
+          formatFeedback: {
+            ...state.formatFeedback,
+            [fieldID]: !valid ? (message ? message : "") : message ? message : "",
+          },
+          // call the func providing the modeID, because of the delay in setState
+          mode: checkOverallMode({ ...state.modeID, [fieldID]: valid ? "draft" : "invalid" }),
+        })
+      })
     } else {
       const valid = value.trim().length > 0
       setState({ ...state, text, mode: valid ? "draft" : "invalid" })
@@ -150,8 +146,6 @@ export function ExerciseMultiTextInput({
       handleFooterClick={handleClick}
     >
       <Markdown md={question.text} setText={setText} state={state} />
-      <br />
-      <Markdown md={`${fFeedback}`} />
     </InteractWithQuestion>
   )
 }

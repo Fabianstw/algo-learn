@@ -9,6 +9,7 @@ import {
 } from "@shared/api/QuestionGenerator.ts"
 import { serializeGeneratorCall } from "@shared/api/QuestionRouter.ts"
 import { Queue } from "@shared/question-generators/StackQueue/Queue.ts"
+import { parseArrayString } from "@shared/question-generators/StackQueue/StackGenerator.ts"
 import Random from "@shared/utils/random.ts"
 import { t, tFunction, tFunctional, Translations } from "@shared/utils/translations.ts"
 
@@ -16,7 +17,10 @@ const translations: Translations = {
   en: {
     name: "Queue-Implementation using an Array",
     description: "Basic questions to test the understanding of Queue",
+    solutionFreetext: `|Index|Question|Solution|\n{{0}}`,
+    performOperations: `**We perform the following operations:**{{0}}`,
     checkFormat: "Please only enter a number.",
+    checkFormatArray: "Please only enter numbers separated by commas.",
     getQueueInfo:
       "**Note:** The method **getQueue()** returns the complete queue as it is as a string. If the queue is not full, the remaining elements are filled with -1.",
     toStringInfo:
@@ -28,7 +32,7 @@ const translations: Translations = {
       " ${{1}}$ " +
       `elements. 
 {{2}}
-       **We perform the following operations:**
+       
 {{3}}
     **What can we definitely say about the queue?**
     `,
@@ -44,7 +48,10 @@ const translations: Translations = {
   de: {
     name: "Implementierung einer Queue mit einem Array",
     description: "Basisfragen zum Testen des Verständnisses von Queues",
+    solutionFreetext: `|Index|Frage|Lösung|\n{{0}}`,
+    performOperations: `**Wir führen nun folgende Operationen aus:**{{0}}`,
     checkFormat: "Bitte geben Sie nur eine Zahl ein.",
+    checkFormatArray: "Bitte geben Sie nur Zahlen durch Kommas getrennt ein.",
     getQueueInfo:
       "**Hinweis:** Die Methode **getQueue()** gibt die komplette Queue unverändert als String zurück. Wenn die Queue nicht voll ist, sind die restlichen Elemente mit -1 gefüllt.",
     toStringInfo:
@@ -55,8 +62,7 @@ const translations: Translations = {
       `Angenommen Sie haben einen **Queue "{{0}}"**, welche maximal` +
       " ${{1}}$ " +
       `Elemente speichern kann. 
-{{2}}
-       **Wir führen nun folgende Operationen aus:** 
+{{2}} 
 {{3}}
     **Welche Aussagen können wir nun über die Queue treffen?**`,
     freeTextInput:
@@ -224,7 +230,7 @@ function generateOperationsQueueFreetext(elements: number[], queueSize: number, 
     }
     // use operation numberElements, getRear or getFront
     else {
-      const numOrRearOrFront = random.choice(["numberElements", "getFront"])
+      const numOrRearOrFront = random.choice(queue.getCurrentNumberOfElements() > 0 ? ["numberElements", "getFront"] : ["numberElements"])
       if (numOrRearOrFront === "numberElements") {
         operations.push({ numberElements: queue.getCurrentNumberOfElements().toString() })
       } else if (numOrRearOrFront === "getFront") {
@@ -585,6 +591,10 @@ export const queueQuestion: QuestionGenerator = {
       }
 
       const operations = generatedOperations.operations
+      const operationsString =
+        operations.length > 0
+          ? t(translations, lang, "performOperations", ["\n- " + operations.join("\n- ")])
+          : ""
 
       question = {
         type: "MultipleChoiceQuestion",
@@ -595,7 +605,7 @@ export const queueQuestion: QuestionGenerator = {
           queueName,
           queueSize.toString(),
           queueInformationElements,
-          "\n- " + operations.join("\n- "),
+          operationsString,
         ]),
         answers: allAnswers,
         feedback: minimalMultipleChoiceFeedback({
@@ -605,11 +615,24 @@ export const queueQuestion: QuestionGenerator = {
     } else {
       const checkFormat: MultiFreeTextFormatFunction = ({ text }, fieldID) => {
         if (fieldID.indexOf("toString") !== -1 || fieldID.indexOf("getQueue") !== -1) {
+          // remove all whitespaces, starting "[" and ending "]"
+          text = parseArrayString(text)
+          // split to check if all elements are numbers
+          const elements = text.split(",")
+          for (let element of elements) {
+            element = element.trim()
+            if (element.startsWith("-")) {
+              element = element.slice(1)
+            }
+            if (!/^\d+$/.test(element) && element !== "") {
+              return { valid: false, message: t(translations, lang, "checkFormatArray") }
+            }
+          }
           return { valid: true, message: "" }
         }
 
         // check if is a number
-        if (isNaN(Number(text))) {
+        if (!/^\d+$/.test(text)) {
           return { valid: false, message: t(translations, lang, "checkFormat") }
         }
         return { valid: true, message: "" }
@@ -623,7 +646,7 @@ export const queueQuestion: QuestionGenerator = {
           return {
             correct: false,
             message: tFunction(translations, lang).t("feedback.incomplete"),
-            correctAnswer: "The answer is not a valid JSON",
+            correctAnswer: t(translations, lang, "checkFormatJSON"),
           }
         }
 
@@ -632,7 +655,7 @@ export const queueQuestion: QuestionGenerator = {
             return {
               correct: false,
               message: tFunction(translations, lang).t("feedback.incomplete"),
-              correctAnswer: "I dont know how to display the correct solution ",
+              correctAnswer: t(translations, lang, "solutionFreetext", [solutionDisplay]),
             }
           }
         }
@@ -647,6 +670,8 @@ export const queueQuestion: QuestionGenerator = {
 
       let inputText = "| Operation | Result |\n| --- | --- |\n"
       const correctAnswers: { [key: string]: string } = {}
+      let solutionDisplay = ""
+      let solutionIndex = 0
       let index = 0
       for (const operation of operationsFreeText.operations) {
         if (Object.prototype.hasOwnProperty.call(operation, "enqueue")) {
@@ -654,30 +679,40 @@ export const queueQuestion: QuestionGenerator = {
         }
         if (Object.prototype.hasOwnProperty.call(operation, "dequeue")) {
           inputText += `| ${queueName}.dequeue() | {{dequeue-${index}####}} |\n`
+          solutionIndex++
+          solutionDisplay += `|${solutionIndex}|${queueName}.dequeue() | ${operation.dequeue} |\n`
           correctAnswers[`dequeue-${index}`] = operation.dequeue
         }
         if (Object.prototype.hasOwnProperty.call(operation, "numberElements")) {
-          inputText += `| ${queueName}.numberElements() | {{numElements-${index}####}} |\n`
+          inputText += `|${queueName}.numberElements() | {{numElements-${index}####}} |\n`
+          solutionIndex++
+          solutionDisplay += `|${solutionIndex}|${queueName}.numberElements() | ${operation.numberElements} |\n`
           correctAnswers[`numElements-${index}`] = operation.numberElements
         }
         if (Object.prototype.hasOwnProperty.call(operation, "getFront")) {
           inputText += `| ${queueName}.peekHead() | {{getFront-${index}####}} |\n`
+          solutionIndex++
+          solutionDisplay += `|${solutionIndex}|${queueName}.peekHead() | ${operation.getFront} |\n`
           correctAnswers[`getFront-${index}`] = operation.getFront
         }
         index++
       }
 
+      solutionIndex++
       const fullOrPartQueue =
         operationsFreeText.queue.getCurrentNumberOfElements() > 0
           ? random.choice(["full", "part"])
           : "full"
       if (fullOrPartQueue === "full") {
         inputText += `|${queueName}.getQueue()|{{getQueue-${index}####[2,-1,-1,1]}}|`
+        solutionDisplay += `|${solutionIndex}|${queueName}.getQueue()|[${operationsFreeText.queue.getQueue()}]|\n`
         correctAnswers[`getQueue-${index}`] = operationsFreeText.queue.getQueue()
       } else {
         inputText += `|${queueName}.toString()|{{toString-${index}####[1,2,3,4]}}|`
+        solutionDisplay += `|${solutionIndex}|${queueName}.toString()|[${operationsFreeText.queue.toString()}]|\n`
         correctAnswers[`toString-${index}`] = operationsFreeText.queue.toString()
       }
+      solutionDisplay += "|#div_my-5?table_w-full#| |"
       inputText += `|#div_my-5?border_none?av_middle?ah_center?table_w-full#| |`
 
       // add the hint what toString and getQueue mean
@@ -686,6 +721,7 @@ export const queueQuestion: QuestionGenerator = {
       } else {
         inputText += "\n" + t(translations, lang, "toStringInfo")
       }
+
 
       question = {
         type: "MultiFreeTextQuestion",

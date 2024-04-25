@@ -16,6 +16,11 @@ const translations: Translations = {
   en: {
     name: "Stack-Implementation using an Array",
     description: "Basic questions to test the understanding of Stacks",
+    solutionFreetext: "|Index|Question|Solution|\n{{0}}",
+    performOperations: `**We perform the following operations:**{{0}}`,
+    checkFormat: "Please only enter a number.",
+    checkFormatArray: "Please only enter numbers separated by commas.",
+    checkFormatJSON: "Error! It has to be passed a valid JSON type.",
     dynamic: "dynamic",
     notDynamic: "not dynamic",
     stackEmpty: "Currently the stack is empty.",
@@ -30,8 +35,7 @@ const translations: Translations = {
     **What can we definitely say about the stack?**
     `,
     freeTextInput:
-      `
-    Consider having a **{{0}} Stack "{{1}}"**, who can store at most` +
+      `Consider having a **{{0}} Stack "{{1}}"**, who can store at most` +
       " ${{2}}$ " +
       `elements. {{3}}
     **We perform the following operations:**
@@ -40,11 +44,16 @@ const translations: Translations = {
   },
   de: {
     name: "Implementierung eines Stacks mit einem Array",
+    description: "Basisfragen zum Testen des Verständnisses von Stacks",
+    solutionFreetext: "|Index|Frage|Lösung|\n{{0}}",
+    performOperations: `**Wir führen nun folgende Operationen aus:**{{0}}`,
     dynamic: "dynamisch",
     notDynamic: "nicht dynamisch",
+    checkFormat: "Bitte gib nur Zahlen ein.",
+    checkFormatArray: "Bitte gib nur Zahlen getrennt durch Kommas ein.",
+    checkFormatJSON: "Error! It has to be passed a valid JSON type.",
     stackEmpty: "Der Stack ist aktuell leer.",
     stackContainsValues: `Der Stack enthält aktuell folgende Elemente:`,
-    description: "Basisfragen zum Testen des Verständnisses von Stacks",
     multipleChoiceText:
       `Angenommen Sie haben einen **{{0}} Stack "{{1}}"**, welcher maximal` +
       " ${{2}}$ " +
@@ -583,6 +592,17 @@ function generateWrongAnswerStack(
   return random.subset(answerList, amount > answerList.length ? answerList.length : amount)
 }
 
+export function parseArrayString(text: string): string {
+  text = text.replace(/\s/g, "")
+  if (text[0] === "[") {
+    text = text.slice(1)
+  }
+  if (text[text.length - 1] === "]") {
+    text = text.slice(0, -1)
+  }
+  return text
+}
+
 export const stackQuestion: QuestionGenerator = {
   name: tFunctional(translations, "name"),
   description: tFunctional(translations, "description"),
@@ -597,7 +617,7 @@ export const stackQuestion: QuestionGenerator = {
   ],
 
   /**
-   * Generates a new Stack question question.
+   * Generates a new Stack question
    *
    * @param generatorPath The path the generator is located. Defined in settings/questionSelection
    * @param lang The language of the question
@@ -681,8 +701,8 @@ export const stackQuestion: QuestionGenerator = {
     }
 
     /*
-        Variation between multiple choice and input
-         */
+    Variation between multiple choice and input
+     */
     let question: Question
     if (variant === "choice") {
       const generation = generateOperationsStack(
@@ -747,6 +767,12 @@ export const stackQuestion: QuestionGenerator = {
         correctAnswerIndex.push(allAnswers.indexOf(correctAnswers[i]))
       }
 
+      const operations = generation.operations
+      const operationsString =
+        operations.length > 0
+          ? t(translations, lang, "performOperations", ["\n- " + operations.join("\n- ")])
+          : ""
+
       question = {
         type: "MultipleChoiceQuestion",
         name: stackQuestion.name(lang),
@@ -757,7 +783,7 @@ export const stackQuestion: QuestionGenerator = {
           stackName,
           stackSize.toString(),
           stackElementsString,
-          "\n- " + generation.operations.join("\n- ") + "\n",
+          operationsString,
         ]),
         answers: allAnswers,
         feedback: minimalMultipleChoiceFeedback({
@@ -768,11 +794,24 @@ export const stackQuestion: QuestionGenerator = {
       const checkFormat: MultiFreeTextFormatFunction = ({ text }, fieldID) => {
         // check if the text provided is for the toString question
         if (correctAnswers[fieldID + "-format"] === "toString") {
+          // remove all whitespaces and "[", "]"
+          text = parseArrayString(text)
+          // split text to get the array
+          const stackArray = text.split(",")
+          for (let i = 0; i < stackArray.length; i++) {
+            stackArray[i] = stackArray[i].trim()
+            if (stackArray[i].startsWith("-")) {
+              stackArray[i] = stackArray[i].slice(1)
+            }
+            if (!/^\d+$/.test(stackArray[i]) && stackArray[i] !== "") {
+              return { valid: false, message: t(translations, lang, "checkFormatArray") }
+            }
+          }
           return { valid: true, message: "" }
         }
-        // else check if the text is a number
-        if (isNaN(parseInt(text))) {
-          return { valid: false, message: "Please enter a number" }
+        // else check if the text only contains numbers
+        if (!/^\d+$/.test(text)) {
+          return { valid: false, message: t(translations, lang, "checkFormat") }
         }
         return { valid: true, message: "" }
       }
@@ -785,25 +824,32 @@ export const stackQuestion: QuestionGenerator = {
           return {
             correct: false,
             message: tFunction(translations, lang).t("feedback.incomplete"),
-            correctAnswer: "The answer is not a valid JSON",
+            correctAnswer: t(translations, lang, "checkFormatJSON"),
           }
         }
 
         for (const key in resultMap) {
           if (correctAnswers[key + "-format"] === "toString") {
-            // check if the user provided [ ] around the toString answer
-            if (!resultMap[key].startsWith("[")) {
-              resultMap[key] = "[" + resultMap[key]
+            const userArray = resultMap[key].split(",")
+            const resultArray = correctAnswers[key].split(",")
+            for (let i = 0; i < userArray.length; i++) {
+              userArray[i] = userArray[i].trim()
+              resultArray[i] = resultArray[i].trim()
+              if (userArray[i] !== resultArray[i]) {
+                console.log(userArray[i], resultArray[i])
+                return {
+                  correct: false,
+                  message: tFunction(translations, lang).t("feedback.incomplete"),
+                  correctAnswer: t(translations, lang, "solutionFreetext", [solutionDisplay]),
+                }
+              }
             }
-            if (!resultMap[key].endsWith("]")) {
-              resultMap[key] = resultMap[key] + "]"
-            }
-          }
-          if (resultMap[key] !== correctAnswers[key]) {
+          } else if (resultMap[key] !== correctAnswers[key]) {
+            console.log(resultMap[key], correctAnswers[key])
             return {
               correct: false,
               message: tFunction(translations, lang).t("feedback.incomplete"),
-              correctAnswer: "I dont know how to display the correct solution ",
+              correctAnswer: solutionDisplay,
             }
           }
         }
@@ -822,8 +868,10 @@ export const stackQuestion: QuestionGenerator = {
       const operations = generatedOperations.operations
       const stack = generatedOperations.stack
 
-      // {{input-1#NL###}}{{input-2####}}
+      // Example inputfield {{test#NL#**Char: **##overlay}}
       let inputText = "| Operation | Result |\n| --- | --- |\n"
+      let solutionDisplay = ""
+      let solutionIndex = 0
       const correctAnswers: { [key: string]: string } = {}
       let index = 0
       for (const operation of operations) {
@@ -831,32 +879,43 @@ export const stackQuestion: QuestionGenerator = {
           inputText += `|${stackName}.push(${operation.push})|(void function)|\n`
         } else {
           if (Object.prototype.hasOwnProperty.call(operation, "getTop")) {
-            inputText += `|${stackName}.getTop()|{{input-${index}####}}|\n`
+            inputText += `|${stackName}.getTop()|{{input-${index}#TL###overlay}}|\n`
+            solutionIndex++
             correctAnswers[`input-${index}`] = operation.getTop
             correctAnswers[`input-${index}-format`] = "getTop"
+            solutionDisplay += `|${solutionIndex}|${stackName}.getTop() | ${operation.getTop} |\n`
           } else if (Object.prototype.hasOwnProperty.call(operation, "size")) {
-            inputText += `|${stackName}.getSize()|{{input-${index}####}}|\n`
-            correctAnswers[`input-${index}`] = stack.getSize().toString()
+            inputText += `|${stackName}.getSize()|{{input-${index}#TL###overlay}}|\n`
+            solutionIndex++
+            correctAnswers[`input-${index}`] = operation.size
             correctAnswers[`input-${index}-format`] = "getSize"
+            solutionDisplay += `|${solutionIndex}|${stackName}.getSize() | ${operation.size} |\n`
           } else if (Object.prototype.hasOwnProperty.call(operation, "amount")) {
-            inputText += `|${stackName}.amountElements()|{{input-${index}####}}|\n`
-            correctAnswers[`input-${index}`] = stack.getCurrentPosition().toString()
+            inputText += `|${stackName}.amountElements()|{{input-${index}#TL###overlay}}|\n`
+            solutionIndex++
+            correctAnswers[`input-${index}`] = operation.amount
             correctAnswers[`input-${index}-format`] = "getCurrentPosition"
+            solutionDisplay += `|${solutionIndex}|${stackName}.getCurrentPosition() | ${operation.amount} |\n`
           }
         }
         index++
       }
 
       // add question to write down the array
-      inputText += `|${stackName}.toString()|{{input-${index}####[1,2,3,4]}}|\n`
+      inputText += `|${stackName}.toString()|{{input-${index}#NL##[1,2,3,4]#overlay}}|\n`
       correctAnswers[`input-${index}`] = stack.toString()
       correctAnswers[`input-${index}-format`] = "toString"
+      solutionIndex++
+      solutionDisplay += `|${solutionIndex}|${stackName}.toString() | ${stack.toString()} |\n`
 
       // adding the extra feature for a div
+      solutionDisplay += "|#div_my-5?table_w-full#| |"
       inputText += `|#div_my-5?border_none?av_middle?ah_center?table_w-full#| |`
       // generate the input fields for the operations (if either getTop, size or amount)
       // if push, we don't ask the user for input
       // last question is to write down the array
+
+      console.log(correctAnswers)
 
       question = {
         type: "MultiFreeTextQuestion",

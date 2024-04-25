@@ -5,6 +5,7 @@ import { solarizedDark, solarizedLight } from "react-syntax-highlighter/dist/esm
 import { FreeTextFeedback } from "@shared/api/QuestionGenerator.ts"
 import { parseMarkdown, ParseTree, ParseTreeNode } from "@shared/utils/parseMarkdown.ts"
 import { CustomInput } from "@/components/CustomInput.tsx"
+import { DrawList } from "@/components/DrawList.tsx"
 import { DrawTable } from "@/components/DrawTable.tsx"
 import { MODE } from "@/components/InteractWithQuestion.tsx"
 import { useTheme } from "../hooks/useTheme"
@@ -138,6 +139,9 @@ export const MarkdownTreeNode: FunctionComponent<{
       return <DrawTable table={parseTreeNode.child} setText={setText} state={state} />
     }
     return <DrawTable table={parseTreeNode.child} />
+  }
+  if (parseTreeNode.kind === "list") {
+    return <DrawList list={parseTreeNode.child} />
   }
   if (parseTreeNode.kind === "a") {
     return (

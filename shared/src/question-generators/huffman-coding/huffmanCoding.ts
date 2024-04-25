@@ -1,5 +1,3 @@
-// TODO: check if the table could be to wide to be represented as possible answer
-
 import { min } from "mathjs"
 import {
   FreeTextFeedbackFunction,
@@ -47,15 +45,12 @@ const translations: Translations = {
     textTable: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each char?`,
-    feedbackInvalid:
-      "Only 1 and 0 allowed. Only 1 and 0 allowed. Only 1 and 0 allowed. Only 1 and 0 allowed",
+    feedbackInvalid: "Please only use the characters 0 and 1.",
     bottomtext:
       "Hints for the Huffman-Code: If you have to choose between nodes with the same weight, " +
       "first choose the one in whose subtree the alphabetically smaller character is contained." +
       " Also choose as the left node, the node with the smaller weight.",
-    multiInputText: `Suppose we have the following table, which represents how often each character 
-{{test#NL#**Char: **##new}} 
-appears in a given string:
+    multiInputText: `Suppose we have the following table, which represents how often each character appears in a given string:
 {{0}}
 What could be a correct **Huffman-Coding** for each character?
 {{1}}`,
@@ -69,7 +64,7 @@ What could be a correct **Huffman-Coding** for each character?
     textTable: `Angenommen wir habe die folgende Tabelle, welche angebibt, wie oft jeder Buchstabe in einem gegebenen String vorkommt:
 {{0}}
         Was wäre eine korrekte **Huffman-Codierung** für jeden Buchstaben?`,
-    feedbackInvalid: "Nur 1 und 0 erlaubt",
+    feedbackInvalid: "Bitte verwenden Sie nur die Zeichen 0 und 1.",
     bottomtext:
       "Hinweise zum Huffman-Code: Wenn Sie zwischen Knoten mit gleichem Gewicht wählen müssen, " +
       "wählen Sie zuerst jenen, in dessen Teilbaum das alphabetisch kleinste Zeichen enthalten ist." +
@@ -332,8 +327,6 @@ export const huffmanCoding: QuestionGenerator = {
       // no format error
       return {
         valid: true,
-        message: text,
-        fullFeedback: "hahahahahhahahahhahahahahahöhahahahah \n> hasdasd",
       }
     }
 
@@ -358,7 +351,6 @@ export const huffmanCoding: QuestionGenerator = {
     } else {
       variant = random.choice(["input", "input2"])
     }
-    variant = "input2"
     let question: Question
     if (variant === "choice" || variant === "input") {
       let word = generateString(wordlength, random)
@@ -471,7 +463,7 @@ export const huffmanCoding: QuestionGenerator = {
         for (const key in wordArray) {
           const fieldID = `index-${i}` // this is the unique ID for the input field
           fieldIDCharMap[fieldID] = key
-          inputFields += "|{{" + fieldID + "#TL#" + key + ": #}}"
+          inputFields += "|{{" + fieldID + "#TL#" + key + ": ##overlay}}"
           if (i % 2 == 1) {
             inputFields += "|\n"
           }
