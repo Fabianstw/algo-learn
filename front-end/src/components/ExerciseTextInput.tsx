@@ -1,4 +1,4 @@
-import { useState } from "react"
+import {useState, useEffect, useCallback} from "react"
 import { Input } from "@/components/ui/input"
 import { FreeTextFeedback, FreeTextQuestion } from "../../../shared/src/api/QuestionGenerator"
 import useGlobalDOMEvents from "../hooks/useGlobalDOMEvents"
@@ -29,7 +29,7 @@ export function ExerciseTextInput({
   permalink?: string
 }) {
   const { playSound } = useSound()
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
 
   const [state, setState] = useState<{
     /** The current state of the exercise interaction */
@@ -56,7 +56,7 @@ export function ExerciseTextInput({
 
   const { mode, text, feedbackObject, formatFeedback } = state
 
-  function setText(text: string) {
+  const setText = useCallback((text: string) => {
     setState((state) => ({ ...state, text }))
     if (question.checkFormat) {
       void Promise.resolve(question.checkFormat({ text })).then(({ valid, message }) => {
@@ -71,9 +71,13 @@ export function ExerciseTextInput({
       const valid = text.trim().length > 0
       setState({ ...state, text, mode: valid ? "draft" : "invalid" })
     }
-  }
+  }, [question, state])
 
-  function handleClick() {
+  useEffect(() => {
+    setText(text)
+  }, [lang, text, setText])
+
+  const handleClick = useCallback(() =>  {
     if (mode === "draft") {
       if (question.feedback !== undefined) {
         setState({ ...state, mode: "submitted" })
@@ -92,7 +96,11 @@ export function ExerciseTextInput({
     } else if (mode === "correct" || mode === "incorrect") {
       onResult && onResult(mode)
     }
-  }
+  }, [mode, onResult, playSound, question, state, text])
+
+  useEffect(() => {
+    handleClick()
+  }, [lang, handleClick]);
 
   useGlobalDOMEvents({
     keydown(e: Event) {
