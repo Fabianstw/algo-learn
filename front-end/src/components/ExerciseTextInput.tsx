@@ -1,6 +1,7 @@
-import {useState, useEffect, useCallback} from "react"
+import { useRef, useState } from "react"
+import { FreeTextFeedback, FreeTextQuestion } from "@shared/api/QuestionGenerator.ts"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FreeTextFeedback, FreeTextQuestion } from "../../../shared/src/api/QuestionGenerator"
 import useGlobalDOMEvents from "../hooks/useGlobalDOMEvents"
 import { useSound } from "../hooks/useSound"
 import { useTranslation } from "../hooks/useTranslation"
@@ -29,7 +30,7 @@ export function ExerciseTextInput({
   permalink?: string
 }) {
   const { playSound } = useSound()
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
 
   const [state, setState] = useState<{
     /** The current state of the exercise interaction */
@@ -56,7 +57,9 @@ export function ExerciseTextInput({
 
   const { mode, text, feedbackObject, formatFeedback } = state
 
-  const setText = useCallback((text: string) => {
+  const userInputRef = useRef<HTMLInputElement>(null)
+
+  function setText(text: string) {
     setState((state) => ({ ...state, text }))
     if (question.checkFormat) {
       void Promise.resolve(question.checkFormat({ text })).then(({ valid, message }) => {
@@ -71,13 +74,24 @@ export function ExerciseTextInput({
       const valid = text.trim().length > 0
       setState({ ...state, text, mode: valid ? "draft" : "invalid" })
     }
-  }, [question, state])
+  }
 
-  useEffect(() => {
-    setText(text)
-  }, [lang, text, setText])
+  function insertText(text: string): void {
+    if (userInputRef.current === null) {
+      setText(text)
+      return
+    }
 
-  const handleClick = useCallback(() =>  {
+    setText(
+      userInputRef.current.value.slice(0, userInputRef.current.selectionStart ?? 0) +
+        text +
+        userInputRef.current.value.slice(userInputRef.current.selectionEnd ?? 0),
+    )
+
+    userInputRef.current.focus()
+  }
+
+  function handleClick() {
     if (mode === "draft") {
       if (question.feedback !== undefined) {
         setState({ ...state, mode: "submitted" })
@@ -96,11 +110,7 @@ export function ExerciseTextInput({
     } else if (mode === "correct" || mode === "incorrect") {
       onResult && onResult(mode)
     }
-  }, [mode, onResult, playSound, question, state, text])
-
-  useEffect(() => {
-    handleClick()
-  }, [lang, handleClick]);
+  }
 
   useGlobalDOMEvents({
     keydown(e: Event) {
@@ -117,20 +127,31 @@ export function ExerciseTextInput({
 
   const msgColor =
     mode === "draft" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-  const message =
-    mode === "correct" ? (
-      <b className="text-2xl">{t("feedback.correct")}</b>
-    ) : mode === "incorrect" ? (
-      feedbackObject?.correctAnswer ? (
+
+  const message = []
+  if (mode === "correct") {
+    message.push(<b className="text-2xl">{t("feedback.correct")}</b>)
+  } else if (mode === "incorrect") {
+    if (feedbackObject?.feedbackText) {
+      message.push(
+        <>
+          <Markdown md={feedbackObject.feedbackText} />
+          <br />
+        </>,
+      )
+    }
+    if (feedbackObject?.correctAnswer) {
+      message.push(
         <>
           <b className="text-xl">{t("feedback.possible-correct-solution")}:</b>
           <br />
           <Markdown md={feedbackObject.correctAnswer} />
-        </>
-      ) : (
-        <b className="text-2xl">{t("feedback.incorrect")}</b>
+        </>,
       )
-    ) : null
+    } else {
+      message.push(<b className="text-2xl">{t("feedback.incorrect")}</b>)
+    }
+  }
 
   return (
     <InteractWithQuestion
@@ -147,6 +168,7 @@ export function ExerciseTextInput({
       <div className="flex place-items-center gap-2 pl-3">
         <Markdown md={question.prompt} />
         <Input
+          ref={userInputRef}
           autoFocus
           disabled={mode === "correct" || mode === "incorrect"}
           value={text}
@@ -164,6 +186,18 @@ export function ExerciseTextInput({
       </div>
       <div className="py-5 text-slate-600 dark:text-slate-400">
         <Markdown md={question.bottomText} />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {(question.typingAid ?? []).map((el, index) => (
+          <Button
+            variant="secondary"
+            key={`ta-${index}`}
+            onClick={() => insertText(el.input)}
+            aria-label={t("typing-aid.label", [el.label])}
+          >
+            <Markdown md={el.text} />
+          </Button>
+        ))}
       </div>
     </InteractWithQuestion>
   )
